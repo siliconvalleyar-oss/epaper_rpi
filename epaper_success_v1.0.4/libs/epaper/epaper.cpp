@@ -33,7 +33,7 @@ Spi_t::Spi_t() {
     bcm2835_spi_begin();
     bcm2835_spi_setBitOrder(BCM2835_SPI_BIT_ORDER_MSBFIRST);
     bcm2835_spi_setDataMode(BCM2835_SPI_MODE0);
-    bcm2835_spi_setClockDivider(BCM2835_SPI_CLOCK_DIVIDER_256); // ~976 KHz (igual que referencia)
+    bcm2835_spi_setClockDivider(BCM2835_SPI_CLOCK_DIVIDER_128); // ~1.95 MHz (2x más rápido)
     
     // Deshabilitar CS hardware, usamos CS manual por GPIO
     bcm2835_spi_chipSelect(BCM2835_SPI_CS_NONE);
@@ -75,6 +75,7 @@ EPD_Driver::EPD_Driver(uint32_t eScreen_EPD, const pins_t& board)
     : Gpio_t(true)
     , spi_ptr(std::make_unique<Spi_t>())
     , pin_cfg_epaper(board)
+    , m_zeroFrame(nullptr)
 {
     // Tipo de pantalla
     pdi_size = (uint16_t)(eScreen_EPD >> 8);
@@ -130,8 +131,18 @@ EPD_Driver::EPD_Driver(uint32_t eScreen_EPD, const pins_t& board)
     // Calcular tamaño de datos de imagen
     image_data_size = (uint32_t)screenSizeV * (uint32_t)(screenSizeH / 8);
 
+    // Pre-allocar buffer de ceros para frame RED
+    m_zeroFrame = new uint8_t[image_data_size]();
+
     // Configurar registros según tamaño de pantalla
     memcpy(register_data, register_data_sm, sizeof(register_data_sm));
+}
+
+EPD_Driver::~EPD_Driver() {
+    if (m_zeroFrame) {
+        delete[] m_zeroFrame;
+        m_zeroFrame = nullptr;
+    }
 }
 
 int EPD_Driver::digitalRead(int gpio) {
@@ -180,19 +191,35 @@ void EPD_Driver::COG_initial() {
 }
 
 void EPD_Driver::sendIndexData(uint8_t index, const uint8_t *data, uint32_t len) {
-    // Enviar comando: DC=LOW, CS=LOW → transferir byte → CS=HIGH
+    // Fase comando: DC=LOW, CS=LOW → transferir index → CS=HIGH
     digitalWrite(pin_cfg_epaper.panelDC, LOW);
     digitalWrite(pin_cfg_epaper.panelCS, LOW);
     hV_HAL_SPI_transfer(index);
     digitalWrite(pin_cfg_epaper.panelCS, HIGH);
 
-    // Enviar datos: DC=HIGH, CS=LOW → transferir cada byte → CS=HIGH entre cada uno
+    // Fase datos: DC=HIGH, CS=LOW → burst transfer → CS=HIGH
+    digitalWrite(pin_cfg_epaper.panelDC, HIGH);
+    digitalWrite(pin_cfg_epaper.panelCS, LOW);
     for (uint32_t i = 0; i < len; i++) {
-        digitalWrite(pin_cfg_epaper.panelDC, HIGH);
-        digitalWrite(pin_cfg_epaper.panelCS, LOW);
         hV_HAL_SPI_transfer(data[i]);
-        digitalWrite(pin_cfg_epaper.panelCS, HIGH);
     }
+    digitalWrite(pin_cfg_epaper.panelCS, HIGH);
+}
+
+void EPD_Driver::sendCommand8(uint8_t command) {
+    digitalWrite(pin_cfg_epaper.panelDC, LOW);
+    digitalWrite(pin_cfg_epaper.panelCS, LOW);
+    hV_HAL_SPI_transfer(command);
+    digitalWrite(pin_cfg_epaper.panelCS, HIGH);
+}
+
+void EPD_Driver::sendCommandData8(uint8_t command, uint8_t data) {
+    digitalWrite(pin_cfg_epaper.panelDC, LOW);
+    digitalWrite(pin_cfg_epaper.panelCS, LOW);
+    hV_HAL_SPI_transfer(command);
+    digitalWrite(pin_cfg_epaper.panelDC, HIGH);
+    hV_HAL_SPI_transfer(data);
+    digitalWrite(pin_cfg_epaper.panelCS, HIGH);
 }
 
 void EPD_Driver::softReset() {
@@ -240,6 +267,8 @@ void EPD_Driver::displayRefresh() {
     uint8_t dummy = 0x00;
     sendIndexData(0x12, &dummy, 0);  // Display Refresh — solo comando
     
+    delay_ms(5);  // Espera mínima post-refresh (como referencia PDLS)
+    
     uint32_t timeout = 20000;  // 20 segundos para refresh completo
     while (digitalRead(pin_cfg_epaper.panelBusy) != HIGH && timeout > 0) {
         delay_ms(1);
@@ -273,11 +302,7 @@ void EPD_Driver::globalDifferentialUpdate(const uint8_t *oldData, const uint8_t 
     }
 
     sendIndexData(0x10, newData, image_data_size);
-
-    uint8_t *zeroFrame = new uint8_t[image_data_size]();
-    sendIndexData(0x13, zeroFrame, image_data_size);
-    delete[] zeroFrame;
-
+    sendIndexData(0x13, m_zeroFrame, image_data_size);
     DCDC_powerOn();
     displayRefresh();
 }
