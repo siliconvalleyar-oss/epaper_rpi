@@ -252,13 +252,32 @@ void EPD_Driver::displayRefresh() {
 }
 
 void EPD_Driver::globalUpdate(const uint8_t *data1s, const uint8_t *data2s) {
-    // Enviar primer frame (0x10 = canal negro/BW)
     sendIndexData(0x10, data1s, image_data_size);
-
-    // Enviar segundo frame (0x13 = canal rojo/segundo plano)
     sendIndexData(0x13, data2s, image_data_size);
+    DCDC_powerOn();
+    displayRefresh();
+}
 
-    // Encender DC/DC y refrescar
+void EPD_Driver::globalDifferentialUpdate(const uint8_t *oldData, const uint8_t *newData) {
+    bool hasChanges = false;
+
+    for (uint32_t i = 0; i < image_data_size; i++) {
+        if (oldData[i] != newData[i]) {
+            hasChanges = true;
+            break;
+        }
+    }
+
+    if (!hasChanges) {
+        return;
+    }
+
+    sendIndexData(0x10, newData, image_data_size);
+
+    uint8_t *zeroFrame = new uint8_t[image_data_size]();
+    sendIndexData(0x13, zeroFrame, image_data_size);
+    delete[] zeroFrame;
+
     DCDC_powerOn();
     displayRefresh();
 }

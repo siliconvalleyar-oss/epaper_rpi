@@ -7,10 +7,12 @@ namespace EPAPER_DISPLAY {
 
 EpaperDisplay::EpaperDisplay(uint32_t screen_type, const EPAPER::pins_t& board_config)
     : m_buffer(nullptr)
+    , m_prevBuffer(nullptr)
     , m_width(0)
     , m_height(0)
     , m_bufferSize(0)
     , m_transparent(true)
+    , m_firstUpdate(true)
     , m_screenType(screen_type)
     , m_boardConfig(board_config)
 {
@@ -35,9 +37,11 @@ EpaperDisplay::EpaperDisplay(uint32_t screen_type, const EPAPER::pins_t& board_c
 
     m_bufferSize = (m_width * m_height) / 8;
     m_buffer = new uint8_t[m_bufferSize]();
+    m_prevBuffer = new uint8_t[m_bufferSize]();
 
     m_driver = std::make_unique<EPAPER::EPD_Driver>(screen_type, m_boardConfig);
 
+    memset(m_prevBuffer, 0xFF, m_bufferSize);
     clearScreen(true);
 }
 
@@ -45,6 +49,10 @@ EpaperDisplay::~EpaperDisplay() {
     if (m_buffer) {
         delete[] m_buffer;
         m_buffer = nullptr;
+    }
+    if (m_prevBuffer) {
+        delete[] m_prevBuffer;
+        m_prevBuffer = nullptr;
     }
 }
 
@@ -60,9 +68,27 @@ void EpaperDisplay::clearScreen(bool white) {
     memset(m_buffer, value, m_bufferSize);
 }
 
-void EpaperDisplay::update() {
-    if (!m_driver || !m_buffer) return;
-    m_driver->globalUpdate(m_buffer, m_buffer);
+bool EpaperDisplay::hasContentChanged() const {
+    return memcmp(m_buffer, m_prevBuffer, m_bufferSize) != 0;
+}
+
+bool EpaperDisplay::update() {
+    if (!m_driver || !m_buffer) return false;
+
+    if (m_firstUpdate) {
+        m_driver->globalUpdate(m_buffer, m_buffer);
+        memcpy(m_prevBuffer, m_buffer, m_bufferSize);
+        m_firstUpdate = false;
+        return true;
+    }
+
+    if (!hasContentChanged()) {
+        return false;
+    }
+
+    m_driver->globalDifferentialUpdate(m_prevBuffer, m_buffer);
+    memcpy(m_prevBuffer, m_buffer, m_bufferSize);
+    return true;
 }
 
 void EpaperDisplay::drawPixel(int x, int y, bool black) {

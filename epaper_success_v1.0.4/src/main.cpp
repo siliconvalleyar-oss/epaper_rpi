@@ -127,13 +127,15 @@ int main() {
 
         display.drawLine(10, 140, 285, 140, true);
 
-        display.update();
+        bool changed = display.update();
 
-        std::cout << "\r  " << formatTime(t)
-                  << "  |  " << formatDate(t)
-                  << "  |  " << formatDay(t)
-                  << "  |  " << formatUptime(uptime)
-                  << "   " << std::flush;
+        if (changed) {
+            std::cout << "\r  " << formatTime(t)
+                      << "  |  " << formatDate(t)
+                      << "  |  " << formatDay(t)
+                      << "  |  " << formatUptime(uptime)
+                      << "   " << std::flush;
+        }
 
         uptime++;
     }

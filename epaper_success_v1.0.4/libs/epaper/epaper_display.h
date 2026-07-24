@@ -21,7 +21,7 @@ public:
 
     bool init();
     void clearScreen(bool white = true);
-    void update();
+    bool update();
 
     void drawPixel(int x, int y, bool black);
     void drawLine(int x0, int y0, int x1, int y1, bool black);
@@ -41,12 +41,15 @@ public:
 private:
     void drawCharToBuffer(int x, int y, char c, FontManager& fm, bool black);
     bool isValidCoordinate(int x, int y) const;
+    bool hasContentChanged() const;
 
     uint8_t* m_buffer;
+    uint8_t* m_prevBuffer;
     int m_width;
     int m_height;
     int m_bufferSize;
     bool m_transparent;
+    bool m_firstUpdate;
 
     std::unique_ptr<EPAPER::EPD_Driver> m_driver;
     uint32_t m_screenType;
