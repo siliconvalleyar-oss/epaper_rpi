@@ -1,104 +1,184 @@
-# E-Paper Clock - epaper_success_v1.0.3
+#INSTALL
 
-Reloj en pantalla e-paper 2.66" (296x152) para Raspberry Pi Zero 2W.
+sudo apt-get install libraspberrypi-dev -y
 
-## Que hace
 
-Muestra un reloj en tiempo real con:
-- Hora: `HH:MM:SS` en fuente grande (FONT_16x32_BIGNUM, 16x32 pixeles)
-- Fecha: `YYYY-MM-DD` en fuente 5x8
-- Dia de la semana: en fuente 7x8 THICK
-- Tiempo de actividad: `UP: HH:MM:SS`
-- Lineas separadoras horizontales
 
-## Layout de pantalla (296x152)
 
-```
-y=8:    "E-PAPER CLOCK"       FONT_5x8
-y=22:   ───────────────
-y=32:   "12:34:56"            FONT_16x32 (centrado)
-y=70:   ───────────────
-y=82:   "2026-07-24"          FONT_5x8
-y=100:  "DOMINGO"             FONT_7x8_THICK
-y=120:  "UP: 00:05:32"        FONT_5x8
-y=140:  ───────────────
-```
 
-## Compilar y ejecutar
 
-```bash
-make clean && make -j4
-make run   # ejecuta con sudo
-```
+ANNOTATE EPAPER:
+raspberry pi 2w & pi 4
 
-## Compilacion remota
+/******************************************************************
+WIRE_GRAY_PIN    <->	Panel_CS    <->		PIN13 - gpio27
+WIRE_BLUE_PIN    <->	MOSI		<->    	PIN19 - gpio10
+WIRE_BROWN_PIN   <->	SCK    		<->    	PIN23 - gpio11
+WIRE_GREEN_PIN   <->	MISO    	<->     PIN21 - gpio9
 
-```bash
-sshpass -p zero ssh pi@raspi.local \
-  "cd /home/pi/src/epaper_rpi && git pull && \
-   rm -rf epaper_success_v1.0.3/obj epaper_success_v1.0.3/bin && \
-   make -C epaper_success_v1.0.3 -j4 && \
-   sudo ./epaper_success_v1.0.3/bin/epaper_app"
-```
+WIRE_VIOLET_PIN   <->	Flash_CS    <->     PIN15 - gpio22
+WIRE_YELLOW_PIN   <->	RESET    	<->     PIN22 - gpio25
+WIRE_ORANGE_PIN   <->	D/C    		<->    	PIN24 - gpio8 -ce0
+WIRE_RED_PIN 	  <->	BUSY 		<->	    PIN26 - gpio7 -ce1
 
-## Cableado (Zero 2W)
+pixels 266 = 152 pix x 296 pix
+total bytes = 5624 bytes
+******************************************************************/
 
-| Color   | GPIO | Pin | Funcion |
-|---------|------|-----|---------|
-| Rojo    | 25   | 22  | BUSY (input) |
-| Naranja | 24   | 18  | DC (output) |
-| Amarillo| 23   | 16  | RESET (output) |
-| Gris    | 27   | 13  | CS (output) |
-| Violeta | 22   | 15  | Flash CS |
-| Azul    | 10   | 19  | MOSI (SPI) |
-| Marron  | 11   | 23  | SCLK (SPI) |
-| Verde   | 9    | 21  | MISO (SPI, no usado) |
+others
+/******************************************************************
+WIRE_GRAY_PIN    <->	Panel_CS    <->	PIN13 - gpio2
+WIRE_BLUE_PIN    <->	MOSI		<->    	PIN19 - gpio12
+WIRE_BROWN_PIN   <->	SCK    		<->    	PIN23 - gpio14
+WIRE_GREEN_PIN   <->	MISO    	<->     PIN21 - gpio13
 
-## Dependencias
+WIRE_VIOLET_PIN   <->	Flash_CS    <->     PIN15 - gpio3
+WIRE_YELLOW_PIN   <->	RESET    	<->     PIN22 - gpio6
+WIRE_ORANGE_PIN   <->	D/C    		<->    	PIN24 - gpio10 -ce0
+WIRE_RED_PIN 	  <->	BUSY 		<->	    PIN26 - gpio11 -ce1
 
-```bash
-sudo apt install libbcm2835-dev
-```
+pixels 266 = 152 pix x 296 pix
+total bytes = 5624 bytes
+******************************************************************/
+corregido 
 
-## Estructura
 
-```
-epaper_success_v1.0.3/
-├── Makefile
-├── libs/
-│   ├── app/config.h           # Deteccion 32/64 bits
-│   ├── epaper/
-│   │   ├── boards.h           # Configuraciones de pines
-│   │   ├── epaper.h           # Driver EPD (bcm2835 SPI)
-│   │   ├── epaper.cpp         # Implementacion driver
-│   │   ├── epaper_display.h   # API de dibujo (buffer, texto, lineas)
-│   │   └── epaper_display.cpp # Implementacion API
-│   ├── fonts/
-│   │   ├── fonts.h            # 9 fuentes bitmap declaradas
-│   │   ├── fonts.cpp          # Datos de las fuentes
-│   │   ├── fonts_manager.h    # Gestor de fuentes
-│   │   └── fonts_manager.cpp  # Implementacion gestor
-│   └── tyme/
-│       ├── tyme.h             # Funciones de delay
-│       └── tyme.cpp           # Implementacion (usleep)
-└── src/
-    └── main.cpp               # Aplicacion reloj
-```
+#define DC pin
+#define CS pin
 
-## Fuentes disponibles
 
-| Fuente | Tamano | Descripcion |
-|--------|--------|-------------|
-| FONT_5x8 | 5x8 | ASCII estandar |
-| FONT_7x8_THICK | 7x8 | Negrita (solo mayusculas) |
-| FONT_4x8_SEG | 4x8 | Siete segmentos |
-| FONT_8x8_WIDE | 8x8 | Ancha (solo mayusculas) |
-| FONT_3x8_TINY | 3x8 | Minima |
-| FONT_7x8_HOMESPUN | 7x8 | Retro |
-| FONT_8x8 | 8x8 | Original C64 |
-| FONT_16x32_BIGNUM | 16x32 | Numeros grandes (0-9, :) |
-| FONT_16x16_MEDNUM | 16x16 | Numeros medianos (0-9, :) |
+SPITimingFormat(){
+uint8_t index=0x09;
+uint8_t buffer[]={0x1,0x3c,0x1f,0x5c,0xa3,0xe9,0xbc,0xeb,0xda,0xf1};
 
-## Nota sobre refresh
+DC=0;
+CS=0;
+spi_send_one_byte(index);
+CS=1
+DC=1
 
-El refresh completo de la pantalla e-paper 2.66" toma ~15 segundos (hardware). El reloj actualiza cada segundo, pero el display solo muestra el cambio cuando el refresh termina.
+for(;;){
+	delay_ms(1);
+	CS=0;
+	value_return=spi_send_buffer(buffer);
+	CS=1;
+
+	if(value_return==0)exit;
+	}
+}
+
+
+
+
+#power
+
+powerOnCOGdriver(){
+delay_ms(5);//1 ms , diferential original
+RES=1;
+delay_ms(5); 
+RES=0;
+delay_ms(10); 
+RES=1;
+delay_ms(5); 
+
+spi_send(0x00 , 0x0e);
+CS, HIGH;
+delay_ms(5); //1 ms , diferential original
+#end
+return ;
+}
+
+
+
+SetEnvironmentTemperatureAndPSR(){
+
+uint8_t get_data_TSSET;
+uint8_t cmd=0xe5;
+uint8_t get_PSR;
+
+spi_get(cmd, (*) get_data_TSSET);
+
+spi_send(0xe0,0x02);
+
+
+	if(EPD_zise > 2.9"){
+		exit;
+	}
+
+spi_get(0x00,PSR);
+
+
+}
+
+EPD_266 = 152x296;
+white=0;
+black=1;
+
+
+inputImageToTheEPD(cmd , buffer){
+DC=0;
+CS=0;
+spi_send(cmd);
+DC=1;
+for(;;){
+	CS=1;
+	delay_ms(1);
+	CS=0;
+	spi_send_buff(buffer++);
+
+}
+CS=1;
+delay_ms(1);
+CS=0;
+DC=0;
+}
+
+
+
+SendUpdatingCommand(*busy){
+
+// Power on command
+spi(0x4);//*2
+
+	while(BUSY);//BUSY=HIGH?
+
+// Display Refresh
+spi(0x12);//*2
+
+	while(BUSY);//BUSY=HIGH?
+
+}//end
+
+
+
+turnOffDcDc(){
+
+spi(0x2);//*2
+ while(BUSY);//BUSY=HIGH?
+DC=LOW
+CS=0;
+BUSY LOW;
+delay_ms( 150 );
+RES, LOW;
+MOSI=0;
+SCK=0;
+
+//of /Cut off the vcc vdd of COG
+}
+
+
+void EPD_Driver::COG_initial(){
+
+ BUSY = INPUT ;
+DC= OUTPUT ;
+DC= HIGH;
+RES=OUTPUT 
+RES=HIGH
+CS= OUTPUT;
+CS=HIGH;
+
+}
+
+
+
+bee@macbook epaper_me_code % 

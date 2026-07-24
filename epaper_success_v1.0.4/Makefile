@@ -1,6 +1,6 @@
 CC = g++
 CXXFLAGS = -std=c++20 -Ilibs -Isrc -Wall -pedantic -g
-LIBRARIES = -pthread -lqrencode -lbcm2835
+LIBRARIES = -pthread -lbcm2835
 
 SRC_DIR = src
 LIB_DIR = libs
@@ -25,7 +25,7 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp | $(OBJ_DIR)
 	$(CC) $(CXXFLAGS) -c $< -o $@ -MMD -MP
 	@echo "Compiled: $< -> $@"
 
-# Plantilla de compilación para subdirectorios de LIB_DIR
+# Plantilla de compilacion para subdirectorios de LIB_DIR
 define compile_template
 $(OBJ_DIR)/%.o: $(LIB_DIR)/$(1)/%.cpp | $(OBJ_DIR)
 	$(CC) $(CXXFLAGS) -c $$< -o $$@ -MMD -MP
