@@ -36,3 +36,4 @@ compile_remote.sh
 *.tmp
 *.bak
 *.old
+PDLS_EXT3_Basic_Global-main/
