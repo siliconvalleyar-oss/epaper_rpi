@@ -14,6 +14,7 @@
 #include <memory>
 #include <cstring>
 #include <cmath>
+#include <csignal>
 #include <epaper/epaper.h>
 #include <epaper/boards.h>
 #include <fonts/fonts_manager.h>
@@ -79,7 +80,6 @@ int main() {
     
     // Time tracking
     int heartBeatCount = 0;
-    unsigned long startTime = 0;
 
     std::cout << "Iniciando ECG..." << std::endl;
 
