@@ -55,6 +55,11 @@ int main() {
     epaper.COG_initial();
     std::cout << "COG listo.\n" << std::endl;
 
+    // Deep clean display before starting
+    std::cout << "Limpiando pantalla..." << std::endl;
+    epaper.clearScreen();
+    std::cout << "Pantalla limpia.\n" << std::endl;
+
     // Create game
     DinoGame game;
     

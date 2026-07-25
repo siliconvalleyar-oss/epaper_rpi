@@ -282,6 +282,21 @@ void EPD_Driver::globalUpdate(const uint8_t *data1s, const uint8_t *data2s) {
     displayRefresh();
 }
 
+void EPD_Driver::clearScreen() {
+    sendIndexData(0x00, &register_data[4], 2);
+
+    uint8_t* white = new uint8_t[image_data_size]();
+    memset(white, 0x00, image_data_size);
+
+    sendIndexData(0x10, white, image_data_size);
+    sendIndexData(0x13, white, image_data_size);
+
+    delete[] white;
+
+    DCDC_powerOn();
+    displayRefresh();
+}
+
 void EPD_Driver::fastUpdate(const uint8_t *oldData, const uint8_t *newData) {
     bool hasChanges = false;
 
