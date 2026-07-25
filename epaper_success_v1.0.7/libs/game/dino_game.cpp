@@ -244,11 +244,15 @@ void DinoGame::drawCactus(uint8_t* buffer, int x, int y) {
 }
 
 void DinoGame::drawGround(uint8_t* buffer) {
-    // Draw ground line
+    // Draw thick ground line
     for (int x = 0; x < SCREEN_W; x++) {
+        // Main ground line
         drawPixel(buffer, x, GROUND_Y);
-        if (x % 3 == 0) {
-            drawPixel(buffer, x, GROUND_Y + 2);
+        drawPixel(buffer, x, GROUND_Y + 1);
+        
+        // Dashed pattern below
+        if (x % 4 < 2) {
+            drawPixel(buffer, x, GROUND_Y + 3);
         }
     }
 }
@@ -355,15 +359,27 @@ void DinoGame::render(uint8_t* buffer) {
         }
     }
     
-    // Draw clouds (decorative)
-    for (int i = 0; i < 3; i++) {
-        int cx = 50 + i * 90;
-        int cy = 35 + (i % 2) * 10;
-        for (int w = 0; w < 20; w++) {
+    // Draw clouds (decorative) - bigger and more visible
+    for (int i = 0; i < 4; i++) {
+        int cx = 30 + i * 70;
+        int cy = 30 + (i % 2) * 15;
+        
+        // Cloud bottom (wide)
+        for (int w = 0; w < 30; w++) {
+            drawPixel(buffer, cx + w, cy + 4);
+            drawPixel(buffer, cx + w, cy + 5);
+        }
+        
+        // Cloud middle
+        for (int w = 5; w < 25; w++) {
+            drawPixel(buffer, cx + w, cy + 2);
+            drawPixel(buffer, cx + w, cy + 3);
+        }
+        
+        // Cloud top (narrow)
+        for (int w = 8; w < 22; w++) {
             drawPixel(buffer, cx + w, cy);
-            if (w > 3 && w < 17) {
-                drawPixel(buffer, cx + w, cy - 2);
-            }
+            drawPixel(buffer, cx + w, cy + 1);
         }
     }
 }
