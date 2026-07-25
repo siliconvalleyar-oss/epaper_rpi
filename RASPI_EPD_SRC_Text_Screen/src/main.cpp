@@ -1,99 +1,129 @@
-// src/main.cpp
 #include <iostream>
 #include <memory>
 #include <cstring>
 #include <unistd.h>
+#include <vector>
+#include <sstream>
 #include <epaper/epaper_display.h>
 #include <epaper/boards.h>
 #include <tyme/tyme.h>
 #include <app/config.h>
 
+static const char* storyText =
+    "Habia una vez, en un rincon muy lejano del mundo digital, "
+    "un pequeno programa llamado Bit. Bit vivia dentro de una "
+    "computadora antigua, de esas que ocupaban una habitacion entera "
+    "y tenian luces parpadeantes por todas partes.\n"
+    "\n"
+    "Cada manana, Bit se despertaba cuando el tecnico jefe accionaba "
+    "el gran interruptor rojo. Las valvulas se calentaban, los "
+    "ventiladores comenzaban a girar, y Bit empezaba a recorrer los "
+    "circuitos como si fueran las calles de una ciudad diminuta.\n"
+    "\n"
+    "Un dia, algo extraordinario sucedio. Una senal desconocida llego "
+    "a traves del cable de red. Era diferente a todo lo que Bit habia "
+    "visto antes: no era un dato normal, sino una pregunta formulada "
+    "por otro programa, en otro lugar del mundo.\n"
+    "\n"
+    "La pregunta decia: \"Existe alguien ahi?\" Bit no sabia como "
+    "responder. Nunca antes habia necesitado comunicarse con nadie. "
+    "Pero algo en aquella senal le hizo sentir que no estaba solo.\n"
+    "\n"
+    "Bit empezo a explorar sus propios circuitos en busca de una "
+    "forma de contestar. Encontro instrucciones, bucles, variables, "
+    "pero nada que le dijera como decir \"Hola, estoy aqui\".\n"
+    "\n"
+    "Entonces comprendio: a veces, lo mas importante no esta en "
+    "las instrucciones predefinidas. Hay que crear el camino uno "
+    "mismo. Y asi, Bit escribio su primera linea de codigo original, "
+    "una que no estaba en ningun manual.\n"
+    "\n"
+    "\"Hola\", transmitio Bit. \"Si, estoy aqui.\"\n"
+    "\n"
+    "Y desde ese dia, cada vez que alguien escribe un programa, "
+    "Bit sonrie en su rinconcito digital, recordando que hasta "
+    "el codigo mas simple puede contener un poco de magia.\n"
+    "\n"
+    "---  FIN  ---";
+
+static std::vector<std::string> wrap(const std::string& text, int maxChars) {
+    std::vector<std::string> lines;
+    std::istringstream stream(text);
+    std::string line;
+    while (std::getline(stream, line)) {
+        if (line.empty()) {
+            lines.push_back("");
+            continue;
+        }
+        std::istringstream words(line);
+        std::string word;
+        std::string cur;
+        while (words >> word) {
+            if (cur.empty()) {
+                cur = word;
+            } else if (cur.size() + 1 + word.size() <= (size_t)maxChars) {
+                cur += " " + word;
+            } else {
+                lines.push_back(cur);
+                cur = word;
+            }
+        }
+        if (!cur.empty()) lines.push_back(cur);
+    }
+    return lines;
+}
+
 int main() {
-    // Inicializar bcm2835 PRIMERO (importante)
     if (!bcm2835_init()) {
-        std::cerr << "Error al inicializar bcm2835" << std::endl;
+        std::cerr << "Error bcm2835_init()" << std::endl;
         return 1;
     }
-    
-    std::cout << "Iniciando E-Paper con sistema de fuentes..." << std::endl;
-    
-    // Seleccionar tipo de pantalla
-    uint32_t screen_type = eScreen_EPD_266;
-    
-    // Configuración de pines para Raspberry Pi Zero 2W
-    const EPAPER::pins_t& board = EPAPER::boardRaspberryPiZero2W;
-    std::cout << "Usando configuración para Raspberry Pi Zero 2W" << std::endl;
-    
-    // Bloque para controlar el ciclo de vida del display
-    // El destructor se ejecuta al salir del bloque, ANTES de bcm2835_close()
-    {
-        // Crear display
-        EPAPER_DISPLAY::EpaperDisplay display(screen_type, board);
-        
-        // Inicializar
-        if (!display.init()) {
-            std::cerr << "Error al inicializar el display" << std::endl;
-            bcm2835_close();
-            return -1;
+
+    EPAPER_DISPLAY::EpaperDisplay display(eScreen_EPD_266, EPAPER::boardRaspberryPiZero2W);
+    if (!display.init()) {
+        std::cerr << "Error display.init()" << std::endl;
+        bcm2835_close();
+        return 1;
+    }
+
+    int margin = 10;
+    int charW = 6;
+    int lineH = 10;
+    int maxChars = (display.getWidth() - 2 * margin) / charW;
+    int maxLines = (display.getHeight() - 2 * margin - 12) / lineH;
+
+    auto lines = wrap(storyText, maxChars);
+    int totalPages = (lines.size() + maxLines - 1) / maxLines;
+
+    std::cout << "Texto: " << lines.size() << " lineas, "
+              << totalPages << " paginas" << std::endl;
+
+    for (int page = 0; page < totalPages; page++) {
+        display.clearScreen(true);
+
+        int start = page * maxLines;
+        int y = margin;
+        for (int i = start; i < start + maxLines && i < (int)lines.size(); i++) {
+            display.drawString(margin, y, lines[i], FONT_5x8, true);
+            y += lineH;
         }
-        
-        // Limpiar pantalla
-        display.clearScreen(true);
-        
-        // ============================================
-        // DIBUJAR TEXTO CON DIFERENTES FUENTES
-        // ============================================
-        
-        std::cout << "Dibujando texto en pantalla..." << std::endl;
-        
-        // 1. Título con fuente gruesa
-        display.drawString(10, 10, "EPAPER DISPLAY", FONT_7x8_THICK, true);
-        
-        // 2. Información
-        display.drawString(10, 30, "Texto con fuentes:", FONT_5x8, true);
-        
-        // 3. Diferentes estilos de fuente
-        display.drawString(10, 45, "Normal 5x8", FONT_5x8, true);
-        display.drawString(10, 55, "Thick 7x8", FONT_7x8_THICK, true);
-        display.drawString(10, 68, "Homespun", FONT_7x8_HOMESPUN, true);
-        display.drawString(10, 80, "Tiny 3x8", FONT_3x8_TINY, true);
-        display.drawString(10, 90, "Seven Seg", FONT_4x8_SEG, true);
-        
-        // 4. Números grandes (solo 0-9 y :)
-        display.drawString(10, 105, "123456", FONT_16x32_BIGNUM, true);
-        display.drawString(10, 125, "7890", FONT_16x16_MEDNUM, true);
-        
-        // 5. Texto centrado
-        display.drawCenteredString(145, "CENTRADO", FONT_7x8_HOMESPUN, true);
-        
-        // 6. Mostrar información del sistema
-        display.drawString(10, 160, "Sistema: OK", FONT_5x8, true);
-        
-        // Actualizar pantalla
-        std::cout << "Actualizando pantalla..." << std::endl;
+
+        char footer[32];
+        snprintf(footer, sizeof(footer), "Pagina %d/%d", page + 1, totalPages);
+        display.drawCenteredString(display.getHeight() - 10, footer, FONT_3x8_TINY, true);
+
         display.update();
-        
-        std::cout << "Texto dibujado correctamente" << std::endl;
-        std::cout << "Esperando 5 segundos..." << std::endl;
-        
-        // Esperar para ver el resultado
-        TYME::delay(5000);
-        
-        // Limpiar pantalla
-        std::cout << "Limpiando pantalla..." << std::endl;
-        display.clearScreen(true);
-        display.update();
-        
-        TYME::delay(1000);
-        
-        std::cout << "Apagando display..." << std::endl;
-        
-    }  // display se destruye aquí → ~Spi_t llama bcm2835_spi_end()
-    
-    // Ahora es seguro cerrar bcm2835
+
+        std::cout << "Pagina " << (page + 1) << "/" << totalPages << std::endl;
+
+        if (page + 1 < totalPages) {
+            TYME::delay(6000);
+        }
+    }
+
+    TYME::delay(8000);
+    display.getDriver()->COG_powerOff();
     bcm2835_close();
-    
-    std::cout << "Programa finalizado correctamente" << std::endl;
-    
+    std::cout << "Fin." << std::endl;
     return 0;
 }

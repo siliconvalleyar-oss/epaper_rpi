@@ -75,6 +75,7 @@ EPD_Driver::EPD_Driver(uint32_t eScreen_EPD, const pins_t& board)
     : Gpio_t(true)
     , spi_ptr(std::make_unique<Spi_t>())
     , pin_cfg_epaper(board)
+    , m_zeroFrame(nullptr)
 {
     // Tipo de pantalla
     pdi_cp = (uint16_t)eScreen_EPD;
@@ -155,6 +156,12 @@ EPD_Driver::EPD_Driver(uint32_t eScreen_EPD, const pins_t& board)
 
     // Configurar registros según tamaño de pantalla
     memcpy(register_data, register_data_sm, sizeof(register_data_sm));
+
+    m_zeroFrame = new uint8_t[image_data_size]();
+}
+
+EPD_Driver::~EPD_Driver() {
+    delete[] m_zeroFrame;
 }
 
 int EPD_Driver::digitalRead(int gpio) {
@@ -274,20 +281,20 @@ void EPD_Driver::displayRefresh() {
 }
 
 void EPD_Driver::globalUpdate(const uint8_t *data1s, const uint8_t *data2s) {
+    (void)data2s;
+    // Soft-reset + re-inicialización (necesarios antes de cada ciclo de update)
+    softReset();
+    uint8_t temp = 25;
+    sendIndexData(0xe5, &temp, 1);               // Input Temperature
+    sendIndexData(0xe0, &register_data[2], 1);    // Active Temperature
+    sendIndexData(0x00, &register_data[3], 2);    // PSR
+
     // Enviar primer frame
     sendIndexData(0x10, data1s, image_data_size);
-    
-    #ifdef DBG_EPAPER
-    std::cout << "cmd 0x10 size: " << image_data_size << std::endl;
-    #endif
-    
-    // Enviar segundo frame
-    sendIndexData(0x13, data2s, image_data_size);
-    
-    #ifdef DBG_EPAPER
-    std::cout << "cmd 0x13 size: " << image_data_size << std::endl;
-    #endif
-    
+
+    // Enviar segundo frame (0x00: 0x10 XOR 0x00 = 0x10 → imagen visible)
+    sendIndexData(0x13, m_zeroFrame, image_data_size);
+
     // Encender DC/DC y refrescar
     DCDC_powerOn();
     displayRefresh();
