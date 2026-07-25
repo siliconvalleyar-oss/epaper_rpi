@@ -296,10 +296,6 @@ void EPD_Driver::fastUpdate(const uint8_t *oldData, const uint8_t *newData) {
         return;
     }
 
-    // Soft-reset antes de cada fast update
-    sendIndexData(0x00, &register_data[1], 1);
-    delay_ms(5);
-
     // Fast update flags: temp|0x40, PSR|0x10|0x02, CDI=0x07
     uint8_t tempFast = register_data[2] | 0x40;
     sendCommandData8(0xE5, tempFast);
