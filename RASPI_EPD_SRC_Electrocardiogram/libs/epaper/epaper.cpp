@@ -271,13 +271,14 @@ void EPD_Driver::displayRefresh() {
 }
 
 void EPD_Driver::globalUpdate(const uint8_t *data1s, const uint8_t *data2s) {
+    (void)data2s;
     softReset();
     sendIndexData(0xe5, &register_data[2], 1);
     sendIndexData(0xe0, &register_data[3], 1);
     sendIndexData(0x00, &register_data[4], 2);
 
     sendIndexData(0x10, data1s, image_data_size);
-    sendIndexData(0x13, data2s, image_data_size);
+    sendIndexData(0x13, m_zeroFrame, image_data_size);
 
     DCDC_powerOn();
     displayRefresh();
