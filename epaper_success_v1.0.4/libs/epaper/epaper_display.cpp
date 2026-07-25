@@ -86,7 +86,7 @@ bool EpaperDisplay::update() {
         return false;
     }
 
-    m_driver->globalDifferentialUpdate(m_prevBuffer, m_buffer);
+    m_driver->fastUpdate(m_prevBuffer, m_buffer);
     memcpy(m_prevBuffer, m_buffer, m_bufferSize);
     return true;
 }
