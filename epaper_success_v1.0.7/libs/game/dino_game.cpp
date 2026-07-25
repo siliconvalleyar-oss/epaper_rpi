@@ -1,7 +1,7 @@
 //////////////////////////////////////////////////////////////////////////////
 //     
 //          filename            :   dino_game.cpp
-//          Description         :   Dino jump game implementation
+//          Description         :   Dino jump game implementation (32x32 sprites)
 //          License             :   GNU 
 //          Author              :   Lio
 //          Hardware            :   Raspberry Pi Zero 2W + e-Paper 2.66"
@@ -9,75 +9,9 @@
 //////////////////////////////////////////////////////////////////////////////
 
 #include "dino_game.h"
+#include "dino_sprites.h"
 #include <fonts/fonts_manager.h>
 #include <cstring>
-
-// Dino sprite (16x18 pixels) - T-Rex standing
-// Row format: 2 bytes per row, MSB first
-static const uint8_t dino_sprite[] = {
-    0x00, 0x00,  // row 0:  ................
-    0x00, 0x00,  // row 1:  ................
-    0x00, 0xE0,  // row 2:  .......###......
-    0x01, 0xF0,  // row 3:  ......#####.....
-    0x01, 0xF0,  // row 4:  ......#####.....
-    0x01, 0xF0,  // row 5:  ......#####.....
-    0x00, 0xE0,  // row 6:  .......###......
-    0x00, 0x40,  // row 7:  .......#........
-    0x00, 0xE0,  // row 8:  .......###......
-    0x01, 0xF0,  // row 9:  ......#####.....
-    0x03, 0xF8,  // row 10: ..##########....
-    0x07, 0xFC,  // row 11: ..############..
-    0x0F, 0xFE,  // row 12: ..##############.
-    0x0F, 0xFE,  // row 13: ..##############.
-    0x07, 0xFC,  // row 14: ..############..
-    0x03, 0xF8,  // row 15: ..##########....
-    0x00, 0x00,  // row 16: ................
-    0x00, 0x00,  // row 17: ................
-};
-
-// Dino running frame 1 (left leg forward)
-static const uint8_t dino_run1[] = {
-    0x00, 0x00,  // row 0:  ................
-    0x00, 0x00,  // row 1:  ................
-    0x00, 0xE0,  // row 2:  .......###......
-    0x01, 0xF0,  // row 3:  ......#####.....
-    0x01, 0xF0,  // row 4:  ......#####.....
-    0x01, 0xF0,  // row 5:  ......#####.....
-    0x00, 0xE0,  // row 6:  .......###......
-    0x00, 0x40,  // row 7:  .......#........
-    0x00, 0xE0,  // row 8:  .......###......
-    0x01, 0xF0,  // row 9:  ......#####.....
-    0x03, 0xF8,  // row 10: ..##########....
-    0x07, 0xFC,  // row 11: ..############..
-    0x0F, 0xFE,  // row 12: ..##############.
-    0x0F, 0xFE,  // row 13: ..##############.
-    0x07, 0xFC,  // row 14: ..############..
-    0x02, 0x10,  // row 15: ......#....#....
-    0x01, 0x20,  // row 16: .......#..#.....
-    0x00, 0x00,  // row 17: ................
-};
-
-// Dino running frame 2 (right leg forward)
-static const uint8_t dino_run2[] = {
-    0x00, 0x00,  // row 0:  ................
-    0x00, 0x00,  // row 1:  ................
-    0x00, 0xE0,  // row 2:  .......###......
-    0x01, 0xF0,  // row 3:  ......#####.....
-    0x01, 0xF0,  // row 4:  ......#####.....
-    0x01, 0xF0,  // row 5:  ......#####.....
-    0x00, 0xE0,  // row 6:  .......###......
-    0x00, 0x40,  // row 7:  .......#........
-    0x00, 0xE0,  // row 8:  .......###......
-    0x01, 0xF0,  // row 9:  ......#####.....
-    0x03, 0xF8,  // row 10: ..##########....
-    0x07, 0xFC,  // row 11: ..############..
-    0x0F, 0xFE,  // row 12: ..##############.
-    0x0F, 0xFE,  // row 13: ..##############.
-    0x07, 0xFC,  // row 14: ..############..
-    0x01, 0x20,  // row 15: .......#..#.....
-    0x02, 0x10,  // row 16: ......#....#....
-    0x00, 0x00,  // row 17: ................
-};
 
 DinoGame::DinoGame() {
     reset();
@@ -87,10 +21,16 @@ void DinoGame::reset() {
     m_dinoY = GROUND_Y - DINO_H;
     m_dinoVelY = 0;
     m_jumping = false;
-    m_duckFrame = false;
+    m_ducking = false;
     
-    m_cactusX = SCREEN_W + 50;
-    m_cactusType = 0;
+    m_obstacleX = SCREEN_W + 80;
+    m_obstacleType = OBS_CACTUS;
+    m_obstacleY = GROUND_Y - 20;
+    
+    for (int i = 0; i < 3; i++) {
+        m_cloudX[i] = 200 + i * 100 + (i * 37) % 60;
+        m_cloudY[i] = 25 + (i * 23) % 20;
+    }
     
     m_score = 0;
     m_speed = 3;
@@ -111,15 +51,13 @@ void DinoGame::jump() {
 }
 
 void DinoGame::autoJump() {
-    // Auto-jump when cactus is within jump range
     if (!m_jumping && !m_gameOver) {
-        int jumpZone = DINO_X + DINO_W + 40;  // Jump when cactus is 40px ahead
-        if (m_cactusX < jumpZone && m_cactusX > DINO_X - 20) {
+        int jumpZone = DINO_X + DINO_W + 40;
+        if (m_obstacleX < jumpZone && m_obstacleX > DINO_X - 10) {
             m_dinoVelY = JUMP_FORCE;
             m_jumping = true;
         }
     } else if (m_gameOver) {
-        // Auto-restart after game over
         reset();
     }
 }
@@ -129,23 +67,19 @@ void DinoGame::update() {
     
     m_frameCount++;
     
-    // Update score
     if (m_frameCount % 10 == 0) {
         m_score++;
     }
     
-    // Increase speed over time
     if (m_score % 100 == 0 && m_score > 0) {
         m_speed++;
         if (m_speed > 8) m_speed = 8;
     }
     
-    // Update dino physics
     if (m_jumping) {
         m_dinoY += m_dinoVelY;
         m_dinoVelY += GRAVITY;
         
-        // Land on ground
         if (m_dinoY >= GROUND_Y - DINO_H) {
             m_dinoY = GROUND_Y - DINO_H;
             m_dinoVelY = 0;
@@ -153,28 +87,39 @@ void DinoGame::update() {
         }
     }
     
-    // Update cactus
-    m_cactusX -= m_speed;
+    m_obstacleX -= m_speed;
     
-    // Spawn new cactus when off screen
-    if (m_cactusX < -CACTUS_W) {
-        m_cactusX = SCREEN_W + 50 + (m_frameCount % 100);
-        m_cactusType = m_frameCount % 3;
+    if (m_obstacleX < -BIRD_W) {
+        m_obstacleX = SCREEN_W + 80 + (m_frameCount % 80);
+        if ((m_frameCount % 5) == 0 && m_score > 50) {
+            m_obstacleType = OBS_BIRD;
+            m_obstacleY = GROUND_Y - 28 - (m_frameCount % 20);
+        } else {
+            m_obstacleType = OBS_CACTUS;
+            m_obstacleY = GROUND_Y - 20;
+        }
     }
     
-    // Collision detection
-    int dinoLeft = DINO_X;
+    for (int i = 0; i < 3; i++) {
+        m_cloudX[i] -= 1;
+        if (m_cloudX[i] < -CLOUD_W) {
+            m_cloudX[i] = SCREEN_W + 20 + (i * 97) % 60;
+            m_cloudY[i] = 25 + (i * 23) % 20;
+        }
+    }
+    
+    int dinoLeft = DINO_X + 4;
     int dinoRight = DINO_X + DINO_W - 4;
-    int dinoTop = m_dinoY + 2;
-    int dinoBottom = m_dinoY + DINO_H - 2;
+    int dinoTop = m_dinoY + 4;
+    int dinoBottom = m_dinoY + DINO_H - 4;
     
-    int cactusLeft = m_cactusX + 2;
-    int cactusRight = m_cactusX + CACTUS_W - 2;
-    int cactusTop = GROUND_Y - CACTUS_H;
-    int cactusBottom = GROUND_Y;
+    int obsLeft = m_obstacleX + 2;
+    int obsRight = m_obstacleX + BIRD_W - 2;
+    int obsTop = m_obstacleY + 2;
+    int obsBottom = m_obstacleY + BIRD_H - 2;
     
-    if (dinoRight > cactusLeft && dinoLeft < cactusRight &&
-        dinoBottom > cactusTop && dinoTop < cactusBottom) {
+    if (dinoRight > obsLeft && dinoLeft < obsRight &&
+        dinoBottom > obsTop && dinoTop < obsBottom) {
         m_gameOver = true;
     }
 }
@@ -188,21 +133,10 @@ void DinoGame::drawPixel(uint8_t* buffer, int x, int y) {
     buffer[byteIndex] |= (1 << bitIndex);
 }
 
-void DinoGame::drawDino(uint8_t* buffer, int x, int y) {
-    // Alternate between running frames based on frame count
-    const uint8_t* sprite;
-    if (m_jumping) {
-        sprite = dino_sprite;  // Standing when jumping
-    } else if (m_frameCount % 10 < 5) {
-        sprite = dino_run1;
-    } else {
-        sprite = dino_run2;
-    }
-    
-    // Sprite is 16 pixels wide, 2 bytes per row, 18 rows
-    for (int row = 0; row < DINO_H; row++) {
-        for (int col = 0; col < DINO_W; col++) {
-            int byteIdx = row * 2 + (col / 8);
+void DinoGame::drawSprite(uint8_t* buffer, const uint8_t* sprite, int x, int y) {
+    for (int row = 0; row < SPRITE_H; row++) {
+        for (int col = 0; col < SPRITE_W; col++) {
+            int byteIdx = row * SPRITE_BYTES_PER_ROW + (col / 8);
             int bitIdx = 7 - (col % 8);
             
             if (sprite[byteIdx] & (1 << bitIdx)) {
@@ -212,45 +146,61 @@ void DinoGame::drawDino(uint8_t* buffer, int x, int y) {
     }
 }
 
-void DinoGame::drawCactus(uint8_t* buffer, int x, int y) {
-    // Cactus: taller trunk with arms
-    int trunkW = 6;
-    int trunkH = CACTUS_H;
+void DinoGame::drawDino(uint8_t* buffer, int x, int y) {
+    const uint8_t* sprite;
     
-    // Draw trunk
-    for (int row = 0; row < trunkH; row++) {
-        for (int col = 0; col < trunkW; col++) {
-            drawPixel(buffer, x + col, y + row);
+    if (m_jumping) {
+        sprite = sprite_dino_jump;
+    } else if (m_ducking) {
+        sprite = (m_frameCount % 10 < 5) ? sprite_dino_duck1 : sprite_dino_duck2;
+    } else {
+        sprite = (m_frameCount % 10 < 5) ? sprite_dino_run1 : sprite_dino_run2;
+    }
+    
+    drawSprite(buffer, sprite, x, y);
+}
+
+void DinoGame::drawObstacle(uint8_t* buffer, int x, int y) {
+    if (m_obstacleType == OBS_BIRD) {
+        const uint8_t* birdSprite = (m_frameCount % 8 < 4) ? sprite_bird1 : sprite_bird2;
+        drawSprite(buffer, birdSprite, x, y);
+    } else {
+        int trunkW = 6;
+        int trunkH = 20;
+        
+        for (int row = 0; row < trunkH; row++) {
+            for (int col = 0; col < trunkW; col++) {
+                drawPixel(buffer, x + col, y + row);
+            }
         }
-    }
-    
-    // Draw left arm (goes up then left)
-    for (int row = 0; row < 4; row++) {
-        drawPixel(buffer, x - 1, y + 5 + row);
-        drawPixel(buffer, x - 2, y + 5 + row);
-    }
-    for (int col = 0; col < 3; col++) {
-        drawPixel(buffer, x - 4 + col, y + 5);
-    }
-    
-    // Draw right arm (goes up then right)
-    for (int row = 0; row < 4; row++) {
-        drawPixel(buffer, x + trunkW, y + 7 + row);
-        drawPixel(buffer, x + trunkW + 1, y + 7 + row);
-    }
-    for (int col = 0; col < 3; col++) {
-        drawPixel(buffer, x + trunkW + 1 + col, y + 7);
+        
+        for (int row = 0; row < 4; row++) {
+            drawPixel(buffer, x - 1, y + 5 + row);
+            drawPixel(buffer, x - 2, y + 5 + row);
+        }
+        for (int col = 0; col < 3; col++) {
+            drawPixel(buffer, x - 4 + col, y + 5);
+        }
+        
+        for (int row = 0; row < 4; row++) {
+            drawPixel(buffer, x + trunkW, y + 7 + row);
+            drawPixel(buffer, x + trunkW + 1, y + 7 + row);
+        }
+        for (int col = 0; col < 3; col++) {
+            drawPixel(buffer, x + trunkW + 1 + col, y + 7);
+        }
     }
 }
 
+void DinoGame::drawCloud(uint8_t* buffer, int x, int y) {
+    drawSprite(buffer, sprite_cloud1, x, y);
+}
+
 void DinoGame::drawGround(uint8_t* buffer) {
-    // Draw thick ground line
     for (int x = 0; x < SCREEN_W; x++) {
-        // Main ground line
         drawPixel(buffer, x, GROUND_Y);
         drawPixel(buffer, x, GROUND_Y + 1);
         
-        // Dashed pattern below
         if (x % 4 < 2) {
             drawPixel(buffer, x, GROUND_Y + 3);
         }
@@ -261,7 +211,6 @@ void DinoGame::drawScore(uint8_t* buffer) {
     FontManager fm;
     fm.setFont(FONT_5x8);
     
-    // Draw "SCORE: XXXX"
     char scoreStr[16];
     snprintf(scoreStr, sizeof(scoreStr), "SCORE: %04d", m_score);
     
@@ -281,7 +230,6 @@ void DinoGame::drawScore(uint8_t* buffer) {
         x += 6;
     }
     
-    // Draw "HI: XXXX" on the right
     char hiStr[16];
     snprintf(hiStr, sizeof(hiStr), "HI: %04d", m_score > 100 ? m_score - 100 : 0);
     
@@ -303,22 +251,20 @@ void DinoGame::drawScore(uint8_t* buffer) {
 }
 
 void DinoGame::render(uint8_t* buffer) {
-    // Clear buffer
     memset(buffer, 0x00, (SCREEN_W * SCREEN_H) / 8);
     
-    // Draw ground
     drawGround(buffer);
     
-    // Draw dino
+    for (int i = 0; i < 3; i++) {
+        drawCloud(buffer, m_cloudX[i], m_cloudY[i]);
+    }
+    
     drawDino(buffer, DINO_X, m_dinoY);
     
-    // Draw cactus
-    drawCactus(buffer, m_cactusX, GROUND_Y - CACTUS_H);
+    drawObstacle(buffer, m_obstacleX, m_obstacleY);
     
-    // Draw score
     drawScore(buffer);
     
-    // Draw game over text
     if (m_gameOver) {
         FontManager fm;
         fm.setFont(FONT_7x8_THICK);
@@ -356,30 +302,6 @@ void DinoGame::render(uint8_t* buffer) {
                 }
             }
             x += 6;
-        }
-    }
-    
-    // Draw clouds (decorative) - bigger and more visible
-    for (int i = 0; i < 4; i++) {
-        int cx = 30 + i * 70;
-        int cy = 30 + (i % 2) * 15;
-        
-        // Cloud bottom (wide)
-        for (int w = 0; w < 30; w++) {
-            drawPixel(buffer, cx + w, cy + 4);
-            drawPixel(buffer, cx + w, cy + 5);
-        }
-        
-        // Cloud middle
-        for (int w = 5; w < 25; w++) {
-            drawPixel(buffer, cx + w, cy + 2);
-            drawPixel(buffer, cx + w, cy + 3);
-        }
-        
-        // Cloud top (narrow)
-        for (int w = 8; w < 22; w++) {
-            drawPixel(buffer, cx + w, cy);
-            drawPixel(buffer, cx + w, cy + 1);
         }
     }
 }

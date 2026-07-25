@@ -21,54 +21,69 @@
 #define GROUND_Y    130
 #define SKY_Y       20
 
-// Dino size
-#define DINO_W      16
-#define DINO_H      18
-#define DINO_X      40
+// Dino size (32x32 sprites)
+#define DINO_W      32
+#define DINO_H      32
+#define DINO_X      30
 
-// Cactus size
+// Bird size (32x32 sprites)
+#define BIRD_W      32
+#define BIRD_H      32
+
+// Cactus size (kept for backwards compat, but removed from game)
 #define CACTUS_W    10
 #define CACTUS_H    20
 
+// Cloud size
+#define CLOUD_W     32
+#define CLOUD_H     32
+
 // Jump physics
 #define GRAVITY     1
-#define JUMP_FORCE  -12
+#define JUMP_FORCE  -14
+
+// Obstacle types
+#define OBS_CACTUS  0
+#define OBS_BIRD    1
 
 class DinoGame {
 public:
     DinoGame();
     
-    // Game loop
     void update();
     void render(uint8_t* buffer);
     
-    // Input
     void jump();
-    void autoJump();  // Auto-jump when cactus approaches
+    void autoJump();
     
-    // State
     bool isGameOver() const { return m_gameOver; }
     int getScore() const { return m_score; }
-    int getCactusX() const { return m_cactusX; }
+    int getObstacleX() const { return m_obstacleX; }
     bool isJumping() const { return m_jumping; }
     void reset();
 
 private:
     void drawDino(uint8_t* buffer, int x, int y);
-    void drawCactus(uint8_t* buffer, int x, int y);
+    void drawObstacle(uint8_t* buffer, int x, int y);
+    void drawCloud(uint8_t* buffer, int x, int y);
     void drawGround(uint8_t* buffer);
     void drawScore(uint8_t* buffer);
     void drawPixel(uint8_t* buffer, int x, int y);
+    void drawSprite(uint8_t* buffer, const uint8_t* sprite, int x, int y);
     
-    // Dino state
     int m_dinoY;
     int m_dinoVelY;
     bool m_jumping;
-    bool m_duckFrame;
+    bool m_ducking;
     
-    // Cactus
-    int m_cactusX;
-    int m_cactusType;  // 0: small, 1: medium, 2: large
+    // Obstacle
+    int m_obstacleX;
+    int m_obstacleType;  // OBS_CACTUS or OBS_BIRD
+    int m_obstacleY;
+    
+    // Clouds
+    int m_cloudX[3];
+    int m_cloudY[3];
     
     // Game state
     int m_score;
@@ -77,6 +92,5 @@ private:
     bool m_gameOver;
     bool m_gameStarted;
     
-    // Frame buffer for double buffering
     uint8_t m_prevBuffer[(SCREEN_W * SCREEN_H) / 8];
 };
