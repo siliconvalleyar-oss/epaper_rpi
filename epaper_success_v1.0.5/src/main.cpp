@@ -187,9 +187,9 @@ int main() {
 
     TYME::delay(10);
 
-    // Fast Update - Mostrar imagen BWR
-    std::cout << "Actualización 5: Imagen BWR (fast)" << std::endl;
-    epaper->fastUpdate(BW_0x00Buffer, BWR_blackBuffer);
+    // Fast Update - Mostrar imagen Mono
+    std::cout << "Actualización 5: Imagen Mono (fast)" << std::endl;
+    epaper->fastUpdate(BW_0x00Buffer, BW_monoBuffer);
 
     std::cout << "Apagando COG..." << std::endl;
     epaper->COG_powerOff();
