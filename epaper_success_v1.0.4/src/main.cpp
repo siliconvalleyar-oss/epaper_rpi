@@ -28,12 +28,12 @@
 //
 //   y=8:   "E-PAPER CLOCK"       FONT_5x8      (h=8)
 //   y=22:  ───────────────       linea horizontal
-//   y=32:  "12:34:56"            FONT_16x16    (h=16)  → y=32..47
-//   y=55:  ───────────────       linea horizontal
-//   y=65:  "2026-07-24"          FONT_5x8      (h=8)   → y=65..72
-//   y=80:  "DOMINGO"             FONT_7x8_THICK(h=8)   → y=80..87
-//   y=100: "UP: 00:05:32"        FONT_5x8      (h=8)   → y=100..107
-//   y=120: ───────────────       linea horizontal
+//   y=32:  "12:34:56"            FONT_4x8_SEG  (h=8)   → y=32..39
+//   y=48:  ───────────────       linea horizontal
+//   y=58:  "2026-07-24"          FONT_5x8      (h=8)   → y=58..65
+//   y=75:  "DOMINGO"             FONT_7x8_THICK(h=8)   → y=75..82
+//   y=95:  "UP: 00:05:32"        FONT_5x8      (h=8)   → y=95..102
+//   y=115: ───────────────       linea horizontal
 //
 
 static volatile sig_atomic_t running = 1;
@@ -78,7 +78,7 @@ int main() {
 
     std::cout << "=== E-PAPER CLOCK ===" << std::endl;
     std::cout << "Pantalla: 2.66\" (296x152)" << std::endl;
-    std::cout << "Fuente reloj: FONT_16x16_MEDNUM (16x16)" << std::endl;
+    std::cout << "Fuente reloj: FONT_4x8_SEG (4x8 seven segment)" << std::endl;
     std::cout << "Presiona Ctrl+C para salir\n" << std::endl;
 
     if (!bcm2835_init()) {
@@ -115,18 +115,18 @@ int main() {
         int lineY1 = 20;
         display.drawLine(10, lineY1, 285, lineY1, true);
 
-        display.drawCenteredString(32, formatTime(t), FONT_16x16_MEDNUM, true);
+        display.drawCenteredString(32, formatTime(t), FONT_4x8_SEG, true);
 
-        int lineY2 = 55;
+        int lineY2 = 48;
         display.drawLine(10, lineY2, 285, lineY2, true);
 
-        display.drawCenteredString(65, formatDate(t), FONT_5x8, true);
+        display.drawCenteredString(58, formatDate(t), FONT_5x8, true);
 
-        display.drawCenteredString(80, formatDay(t), FONT_7x8_THICK, true);
+        display.drawCenteredString(75, formatDay(t), FONT_7x8_THICK, true);
 
-        display.drawCenteredString(100, formatUptime(uptime), FONT_5x8, true);
+        display.drawCenteredString(95, formatUptime(uptime), FONT_5x8, true);
 
-        display.drawLine(10, 120, 285, 120, true);
+        display.drawLine(10, 115, 285, 115, true);
 
         bool changed = display.update();
 
