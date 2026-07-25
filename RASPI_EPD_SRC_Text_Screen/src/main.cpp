@@ -100,6 +100,9 @@ int main() {
 
     for (int page = 0; page < totalPages; page++) {
         display.clearScreen(true);
+        display.update();
+
+        display.clearScreen(true);
 
         int start = page * maxLines;
         int y = margin;

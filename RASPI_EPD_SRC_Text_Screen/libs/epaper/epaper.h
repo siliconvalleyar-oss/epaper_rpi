@@ -95,6 +95,7 @@ public:
     void COG_initial();
     void COG_powerOff();
     void globalUpdate(const uint8_t *data1s, const uint8_t *data2s);
+    void fastUpdate(const uint8_t *oldData, const uint8_t *newData);
     
     // Funciones auxiliares
     void printGpios();  // Declaración del método

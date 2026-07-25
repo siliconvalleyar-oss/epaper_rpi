@@ -299,6 +299,36 @@ void EPD_Driver::globalUpdate(const uint8_t *data1s, const uint8_t *data2s) {
     displayRefresh();
 }
 
+void EPD_Driver::fastUpdate(const uint8_t *oldData, const uint8_t *newData) {
+    bool hasChanges = false;
+    for (uint32_t i = 0; i < image_data_size; i++) {
+        if (oldData[i] != newData[i]) {
+            hasChanges = true;
+            break;
+        }
+    }
+    if (!hasChanges) return;
+
+    sendIndexData(0x00, &register_data[1], 1);
+    delay_ms(5);
+
+    uint8_t tempFast = register_data[2] | 0x40;
+    sendIndexData(0xE5, &tempFast, 1);
+    sendIndexData(0xE0, &register_data[3], 1);
+
+    uint8_t psrFast[2] = { register_data[4] | 0x10, register_data[5] | 0x02 };
+    sendIndexData(0x00, psrFast, 2);
+
+    uint8_t cdi = 0x07;
+    sendIndexData(0x50, &cdi, 1);
+
+    sendIndexData(0x10, oldData, image_data_size);
+    sendIndexData(0x13, newData, image_data_size);
+
+    DCDC_powerOn();
+    displayRefresh();
+}
+
 void EPD_Driver::COG_powerOff() {
     sendIndexData(0x02, &register_data[0], 0);  // Turn off DC/DC
     

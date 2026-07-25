@@ -79,6 +79,7 @@ private:
     
     // Buffer de la pantalla (1 bit por píxel: 1 = negro, 0 = blanco)
     uint8_t* m_buffer;
+    uint8_t* m_prevBuffer;
     
     // Dimensiones de la pantalla
     int m_width;
