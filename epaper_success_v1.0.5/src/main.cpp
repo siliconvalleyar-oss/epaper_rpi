@@ -167,9 +167,9 @@ int main() {
     // Mostrar información de GPIOs
     epaper->printGpios();
 
-    // Global Update Call (primera actualización - global)
+    // Global Update - QR directo (sin flash: ambos frames = QR)
     std::cout << "Actualización 1: QR Code (global)" << std::endl;
-    epaper->globalUpdate(BW_QrBuffer, BW_0x00Buffer);
+    epaper->globalUpdate(BW_QrBuffer, BW_QrBuffer);
     TYME::delay(900);
 
     // Fast Update - Limpiar pantalla
