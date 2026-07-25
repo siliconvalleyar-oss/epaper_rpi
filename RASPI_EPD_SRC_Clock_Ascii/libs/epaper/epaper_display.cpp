@@ -12,7 +12,6 @@ EpaperDisplay::EpaperDisplay(uint32_t screen_type, const EPAPER::pins_t& board_c
     , m_height(0)
     , m_bufferSize(0)
     , m_transparent(true)
-    , m_firstUpdate(true)
     , m_screenType(screen_type)
     , m_boardConfig(board_config)
 {
@@ -59,6 +58,9 @@ EpaperDisplay::~EpaperDisplay() {
 bool EpaperDisplay::init() {
     if (!m_driver) return false;
     m_driver->COG_initial();
+    clearScreen(true);
+    m_driver->globalUpdate(m_buffer, m_buffer);
+    memcpy(m_prevBuffer, m_buffer, m_bufferSize);
     return true;
 }
 
@@ -74,13 +76,6 @@ bool EpaperDisplay::hasContentChanged() const {
 
 bool EpaperDisplay::update() {
     if (!m_driver || !m_buffer) return false;
-
-    if (m_firstUpdate) {
-        m_driver->globalUpdate(m_buffer, m_buffer);
-        memcpy(m_prevBuffer, m_buffer, m_bufferSize);
-        m_firstUpdate = false;
-        return true;
-    }
 
     if (!hasContentChanged()) {
         return false;

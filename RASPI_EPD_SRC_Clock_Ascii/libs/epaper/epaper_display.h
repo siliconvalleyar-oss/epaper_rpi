@@ -49,8 +49,6 @@ private:
     int m_height;
     int m_bufferSize;
     bool m_transparent;
-    bool m_firstUpdate;
-
     std::unique_ptr<EPAPER::EPD_Driver> m_driver;
     uint32_t m_screenType;
     EPAPER::pins_t m_boardConfig;
