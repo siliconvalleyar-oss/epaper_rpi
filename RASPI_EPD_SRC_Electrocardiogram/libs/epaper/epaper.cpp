@@ -75,6 +75,7 @@ EPD_Driver::EPD_Driver(uint32_t eScreen_EPD, const pins_t& board)
     : Gpio_t(true)
     , spi_ptr(std::make_unique<Spi_t>())
     , pin_cfg_epaper(board)
+    , m_zeroFrame(nullptr)
 {
     // Tipo de pantalla
     pdi_size = (uint16_t)(eScreen_EPD >> 8);
@@ -132,6 +133,12 @@ EPD_Driver::EPD_Driver(uint32_t eScreen_EPD, const pins_t& board)
 
     // Configurar registros según tamaño de pantalla
     memcpy(register_data, register_data_sm, sizeof(register_data_sm));
+
+    m_zeroFrame = new uint8_t[image_data_size]();
+}
+
+EPD_Driver::~EPD_Driver() {
+    delete[] m_zeroFrame;
 }
 
 int EPD_Driver::digitalRead(int gpio) {
