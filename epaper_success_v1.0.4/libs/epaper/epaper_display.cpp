@@ -146,11 +146,11 @@ void EpaperDisplay::drawCharToBuffer(int x, int y, char c, FontManager& fm, bool
     FontType type = fm.getCurrentFontType();
 
     if (type == FONT_16x32_BIGNUM || type == FONT_16x16_MEDNUM) {
-        int bytesPerRow = width / 8;
-        for (int row = 0; row < height; row++) {
-            for (int col = 0; col < width; col++) {
-                int byteIndex = row * bytesPerRow + (col / 8);
-                int bitIndex = 7 - (col % 8);
+        int bytesPerCol = height / 8;
+        for (int col = 0; col < width; col++) {
+            for (int row = 0; row < height; row++) {
+                int byteIndex = col * bytesPerCol + (row / 8);
+                int bitIndex = row % 8;
                 bool pixel = (bitmap[byteIndex] >> bitIndex) & 0x01;
 
                 if (pixel) {
