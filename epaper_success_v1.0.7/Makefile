@@ -1,9 +1,9 @@
 CC = g++
-CXXFLAGS = -std=c++20 -Ilibs -Isrc -Wall -pedantic -g
+CXXFLAGS = -std=c++20 -Iinclude -Ilib/picoPNG/src -Wall -pedantic -g
 LIBRARIES = -pthread -lbcm2835
 
 SRC_DIR = src
-LIB_DIR = libs
+LIB_DIR = include
 OBJ_DIR = obj
 BIN_DIR = bin
 
@@ -13,15 +13,22 @@ LIB_SRCS = $(foreach dir,$(LIB_DIRS),$(wildcard $(dir)/*.cpp))
 OBJS     = $(addprefix $(OBJ_DIR)/, $(notdir $(SRCS:.cpp=.o) $(notdir $(LIB_SRCS:.cpp=.o))))
 APP      = $(BIN_DIR)/dino_game
 
+PICOPNG_SRC = lib/picoPNG/src/picopng.cpp
+PICOPNG_OBJ = $(OBJ_DIR)/picopng.o
+
 .PHONY: all clean run
 
 all: $(APP)
 
-$(APP): $(OBJS) | $(BIN_DIR)
+$(APP): $(OBJS) $(PICOPNG_OBJ) | $(BIN_DIR)
 	$(CC) $(CXXFLAGS) -o $@ $^ $(LIBRARIES)
 	@echo "Binary created: $@"
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp | $(OBJ_DIR)
+	$(CC) $(CXXFLAGS) -c $< -o $@ -MMD -MP
+	@echo "Compiled: $< -> $@"
+
+$(PICOPNG_OBJ): $(PICOPNG_SRC) | $(OBJ_DIR)
 	$(CC) $(CXXFLAGS) -c $< -o $@ -MMD -MP
 	@echo "Compiled: $< -> $@"
 
@@ -44,4 +51,4 @@ clean:
 run: $(APP)
 	sudo $<
 
--include $(OBJS:.o=.d)
+-include $(OBJS:.o=.d) $(PICOPNG_OBJ:.o=.d)

@@ -1,7 +1,7 @@
 //////////////////////////////////////////////////////////////////////////////
 //     
 //          filename            :   dino_game.cpp
-//          Description         :   Dino jump game implementation (32x32 sprites)
+//          Description         :   Dino jump game implementation (PNG sprites)
 //          License             :   GNU 
 //          Author              :   Lio
 //          Hardware            :   Raspberry Pi Zero 2W + e-Paper 2.66"
@@ -14,11 +14,64 @@
 #include <cstring>
 
 DinoGame::DinoGame() {
+    m_spritesLoaded = loadSprites();
+    if (!m_spritesLoaded) {
+        m_dinoW = 32;
+        m_dinoH = 32;
+    }
     reset();
 }
 
+DinoGame::~DinoGame() {}
+
+bool DinoGame::loadSprites() {
+    const char* paths[4] = {
+        "assets/dino_run_00.png",
+        "assets/dino_run_01.png",
+        "assets/dino_run_02.png",
+        "assets/dino_run_03.png"
+    };
+
+    int maxW = 0, maxH = 0;
+    SpriteData loaded[4];
+
+    for (int i = 0; i < 4; i++) {
+        loaded[i] = loadPNGMonochrome(paths[i]);
+        if (loaded[i].width <= 0 || loaded[i].height <= 0)
+            return false;
+        if (loaded[i].width  > maxW) maxW = loaded[i].width;
+        if (loaded[i].height > maxH) maxH = loaded[i].height;
+    }
+
+    m_dinoW = maxW;
+    m_dinoH = maxH;
+
+    int bytesPerRow = (maxW + 7) / 8;
+    for (int i = 0; i < 4; i++) {
+        SpriteData& src = loaded[i];
+        int srcBPR = (src.width + 7) / 8;
+        m_dinoSprites[i].width  = maxW;
+        m_dinoSprites[i].height = maxH;
+        m_dinoSprites[i].data.resize(maxH * bytesPerRow, 0);
+
+        for (int y = 0; y < src.height; y++) {
+            for (int x = 0; x < src.width; x++) {
+                int srcByte = y * srcBPR + x / 8;
+                int srcBit  = 7 - (x % 8);
+                if (src.data[srcByte] & (1 << srcBit)) {
+                    int dstByte = y * bytesPerRow + x / 8;
+                    int dstBit  = 7 - (x % 8);
+                    m_dinoSprites[i].data[dstByte] |= (1 << dstBit);
+                }
+            }
+        }
+    }
+
+    return true;
+}
+
 void DinoGame::reset() {
-    m_dinoY = GROUND_Y - DINO_H;
+    m_dinoY = GROUND_Y - m_dinoH;
     m_dinoVelY = 0;
     m_jumping = false;
     m_ducking = false;
@@ -52,7 +105,7 @@ void DinoGame::jump() {
 
 void DinoGame::autoJump() {
     if (!m_jumping && !m_gameOver) {
-        int jumpZone = DINO_X + DINO_W + 40;
+        int jumpZone = DINO_X + m_dinoW + 40;
         if (m_obstacleX < jumpZone && m_obstacleX > DINO_X - 10) {
             m_dinoVelY = JUMP_FORCE;
             m_jumping = true;
@@ -80,8 +133,8 @@ void DinoGame::update() {
         m_dinoY += m_dinoVelY;
         m_dinoVelY += GRAVITY;
         
-        if (m_dinoY >= GROUND_Y - DINO_H) {
-            m_dinoY = GROUND_Y - DINO_H;
+        if (m_dinoY >= GROUND_Y - m_dinoH) {
+            m_dinoY = GROUND_Y - m_dinoH;
             m_dinoVelY = 0;
             m_jumping = false;
         }
@@ -109,9 +162,9 @@ void DinoGame::update() {
     }
     
     int dinoLeft = DINO_X + 4;
-    int dinoRight = DINO_X + DINO_W - 4;
+    int dinoRight = DINO_X + m_dinoW - 4;
     int dinoTop = m_dinoY + 4;
-    int dinoBottom = m_dinoY + DINO_H - 4;
+    int dinoBottom = m_dinoY + m_dinoH - 4;
     
     int obsLeft = m_obstacleX + 2;
     int obsRight = m_obstacleX + BIRD_W - 2;
@@ -146,9 +199,28 @@ void DinoGame::drawSprite(uint8_t* buffer, const uint8_t* sprite, int x, int y) 
     }
 }
 
+void DinoGame::drawSpriteData(uint8_t* buffer, const SpriteData& sprite, int x, int y) {
+    int bytesPerRow = (sprite.width + 7) / 8;
+    for (int row = 0; row < sprite.height; row++) {
+        for (int col = 0; col < sprite.width; col++) {
+            int byteIdx = row * bytesPerRow + (col / 8);
+            int bitIdx = 7 - (col % 8);
+            
+            if (sprite.data[byteIdx] & (1 << bitIdx)) {
+                drawPixel(buffer, x + col, y + row);
+            }
+        }
+    }
+}
+
 void DinoGame::drawDino(uint8_t* buffer, int x, int y) {
+    if (m_spritesLoaded) {
+        int frame = (m_frameCount / 5) % 4;
+        drawSpriteData(buffer, m_dinoSprites[frame], x, y);
+        return;
+    }
+
     const uint8_t* sprite;
-    
     if (m_jumping) {
         sprite = sprite_dino_jump;
     } else if (m_ducking) {
@@ -156,7 +228,6 @@ void DinoGame::drawDino(uint8_t* buffer, int x, int y) {
     } else {
         sprite = (m_frameCount % 10 < 5) ? sprite_dino_run1 : sprite_dino_run2;
     }
-    
     drawSprite(buffer, sprite, x, y);
 }
 

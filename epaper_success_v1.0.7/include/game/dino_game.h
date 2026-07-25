@@ -12,6 +12,7 @@
 
 #include <cstdint>
 #include <cstring>
+#include "png_loader.h"
 
 // Screen dimensions
 #define SCREEN_W 296
@@ -21,18 +22,12 @@
 #define GROUND_Y    130
 #define SKY_Y       20
 
-// Dino size (32x32 sprites)
-#define DINO_W      32
-#define DINO_H      32
+// Dino position
 #define DINO_X      30
 
 // Bird size (32x32 sprites)
 #define BIRD_W      32
 #define BIRD_H      32
-
-// Cactus size (kept for backwards compat, but removed from game)
-#define CACTUS_W    10
-#define CACTUS_H    20
 
 // Cloud size
 #define CLOUD_W     32
@@ -49,6 +44,7 @@
 class DinoGame {
 public:
     DinoGame();
+    ~DinoGame();
     
     void update();
     void render(uint8_t* buffer);
@@ -63,6 +59,7 @@ public:
     void reset();
 
 private:
+    bool loadSprites();
     void drawDino(uint8_t* buffer, int x, int y);
     void drawObstacle(uint8_t* buffer, int x, int y);
     void drawCloud(uint8_t* buffer, int x, int y);
@@ -70,22 +67,25 @@ private:
     void drawScore(uint8_t* buffer);
     void drawPixel(uint8_t* buffer, int x, int y);
     void drawSprite(uint8_t* buffer, const uint8_t* sprite, int x, int y);
+    void drawSpriteData(uint8_t* buffer, const SpriteData& sprite, int x, int y);
+    
+    SpriteData m_dinoSprites[4];
+    int m_dinoW;
+    int m_dinoH;
+    bool m_spritesLoaded;
     
     int m_dinoY;
     int m_dinoVelY;
     bool m_jumping;
     bool m_ducking;
     
-    // Obstacle
     int m_obstacleX;
-    int m_obstacleType;  // OBS_CACTUS or OBS_BIRD
+    int m_obstacleType;
     int m_obstacleY;
     
-    // Clouds
     int m_cloudX[3];
     int m_cloudY[3];
     
-    // Game state
     int m_score;
     int m_speed;
     int m_frameCount;
