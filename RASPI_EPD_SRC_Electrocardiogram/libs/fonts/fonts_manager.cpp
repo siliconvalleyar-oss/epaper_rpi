@@ -55,7 +55,7 @@ FontManager::FontManager() {
     currentFont.data = Font_One;
     currentFont.width = 5;
     currentFont.height = 8;
-    currentFont.start_char = 32;
+    currentFont.start_char = 0;
     currentFont.end_char = 127;
     currentFont.name = "Standard 5x8";
 }
@@ -71,49 +71,49 @@ void FontManager::setFont(FontType type) {
             currentFont.width = 8;
             currentFont.height = 8;
             currentFont.name = "8x8 (myc64_lower)";
-            currentFont.start_char = 32;
+            currentFont.start_char = 0;
             currentFont.end_char = 127;
             break;
         case FONT_5x8:
             currentFont.width = 5;
             currentFont.height = 8;
             currentFont.name = "5x8 Standard";
-            currentFont.start_char = 32;
+            currentFont.start_char = 0;
             currentFont.end_char = 127;
             break;
         case FONT_7x8_THICK:
             currentFont.width = 7;
             currentFont.height = 8;
             currentFont.name = "7x8 Thick";
-            currentFont.start_char = 32;
+            currentFont.start_char = 0;
             currentFont.end_char = 127;
             break;
         case FONT_4x8_SEG:
             currentFont.width = 4;
             currentFont.height = 8;
             currentFont.name = "4x8 Seven Segment";
-            currentFont.start_char = 32;
+            currentFont.start_char = 0;
             currentFont.end_char = 127;
             break;
         case FONT_8x8_WIDE:
             currentFont.width = 8;
             currentFont.height = 8;
             currentFont.name = "8x8 Wide";
-            currentFont.start_char = 32;
+            currentFont.start_char = 0;
             currentFont.end_char = 127;
             break;
         case FONT_3x8_TINY:
             currentFont.width = 3;
             currentFont.height = 8;
             currentFont.name = "3x8 Tiny";
-            currentFont.start_char = 32;
+            currentFont.start_char = 0;
             currentFont.end_char = 127;
             break;
         case FONT_7x8_HOMESPUN:
             currentFont.width = 7;
             currentFont.height = 8;
             currentFont.name = "7x8 Homespun";
-            currentFont.start_char = 32;
+            currentFont.start_char = 0;
             currentFont.end_char = 127;
             break;
         case FONT_16x32_BIGNUM:
