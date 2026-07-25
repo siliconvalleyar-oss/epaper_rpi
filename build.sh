@@ -5,7 +5,7 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECTS=("epaper_success_v1.0.4" "epaper_success_v1.0.5" "epaper_success_v1.0.6" "epaper_success_v1.0.7")
+PROJECTS=("RASPI_EPD_SRC_Clock_Ascii" "RASPI_EPD_SRC_QR_Invert_Graphics" "RASPI_EPD_SRC_Electrocardiogram" "RASPI_EPD_SRC_Dino_Game")
 
 clean_all() {
     echo "========================================"

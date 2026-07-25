@@ -1,4 +1,4 @@
-# E-Paper Clock - epaper_success_v1.0.3
+# E-Paper Clock - RASPI_EPD_SRC_Clock_Ascii
 
 Reloj en pantalla e-paper 2.66" (296x152) para Raspberry Pi Zero 2W.
 
@@ -36,9 +36,9 @@ make run   # ejecuta con sudo
 ```bash
 sshpass -p zero ssh pi@raspi.local \
   "cd /home/pi/src/epaper_rpi && git pull && \
-   rm -rf epaper_success_v1.0.3/obj epaper_success_v1.0.3/bin && \
-   make -C epaper_success_v1.0.3 -j4 && \
-   sudo ./epaper_success_v1.0.3/bin/epaper_app"
+    rm -rf RASPI_EPD_SRC_Clock_Ascii/obj RASPI_EPD_SRC_Clock_Ascii/bin && \
+   make -C RASPI_EPD_SRC_Clock_Ascii -j4 && \
+   sudo ./RASPI_EPD_SRC_Clock_Ascii/bin/epaper_app"
 ```
 
 ## Cableado (Zero 2W)
@@ -63,7 +63,7 @@ sudo apt install libbcm2835-dev
 ## Estructura
 
 ```
-epaper_success_v1.0.3/
+RASPI_EPD_SRC_Clock_Ascii/
 ├── Makefile
 ├── libs/
 │   ├── app/config.h           # Deteccion 32/64 bits
