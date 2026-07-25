@@ -3,7 +3,7 @@
 #        make        (compila todos los proyectos)
 #        make -j4    (compila en paralelo)
 
-PROJECTS = epaper_success_v1.0.4 epaper_success_v1.0.5 epaper_success_v1.0.6
+PROJECTS = epaper_success_v1.0.4 epaper_success_v1.0.5 epaper_success_v1.0.6 epaper_success_v1.0.7
 
 .PHONY: all clean $(PROJECTS)
 
