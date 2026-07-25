@@ -55,11 +55,6 @@ int main() {
     epaper.COG_initial();
     std::cout << "COG listo.\n" << std::endl;
 
-    // Deep clean display before starting
-    std::cout << "Limpiando pantalla..." << std::endl;
-    epaper.clearScreen();
-    std::cout << "Pantalla limpia.\n" << std::endl;
-
     // Create game
     DinoGame game;
     
@@ -74,12 +69,7 @@ int main() {
     game.renderSplash(buffer);
     memcpy(prevBuffer, buffer, sizeof(buffer));
     epaper.globalUpdate(buffer, buffer);
-    TYME::delay(3000);
-
-    // Initial game render
-    game.render(buffer);
-    memcpy(prevBuffer, buffer, sizeof(buffer));
-    epaper.globalUpdate(buffer, buffer);
+    TYME::delay(2000);
 
     std::cout << "Juego iniciado! Modo demo: dino salta solo.\n" << std::endl;
     
