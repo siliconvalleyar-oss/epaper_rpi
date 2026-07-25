@@ -340,6 +340,10 @@ void EPD_Driver::COG_powerOff() {
     digitalWrite(pin_cfg_epaper.panelReset, LOW);
 }
 
+bool EPD_Driver::isBusy() {
+    return digitalRead(pin_cfg_epaper.panelBusy) != HIGH;
+}
+
 void EPD_Driver::printGpios() {
     std::cout << "========================================" << std::endl;
     std::cout << "Configuración de GPIOs para E-Paper:" << std::endl;

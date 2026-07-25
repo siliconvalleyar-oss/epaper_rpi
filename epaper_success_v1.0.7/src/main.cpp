@@ -68,32 +68,33 @@ int main() {
     game.render(buffer);
     memcpy(prevBuffer, buffer, sizeof(buffer));
     epaper.globalUpdate(buffer, buffer);
-    TYME::delay(1000);
 
     std::cout << "Juego iniciado! Modo demo: dino salta solo.\n" << std::endl;
     
     int frameCount = 0;
+    int updateCount = 0;
+    const int GLOBAL_UPDATE_INTERVAL = 30;
 
     // Main game loop
     while (running) {
-        // Auto-jump demo mode
         game.autoJump();
-        
-        // Update game
         game.update();
         
-        // Render every 3 frames for smoother display
-        if (frameCount % 3 == 0) {
+        if (frameCount % 3 == 0 && !epaper.isBusy()) {
             game.render(buffer);
-            
-            // Fast update
-            epaper.fastUpdate(prevBuffer, buffer);
+
+            if (updateCount >= GLOBAL_UPDATE_INTERVAL) {
+                epaper.globalUpdate(buffer, buffer);
+                updateCount = 0;
+            } else {
+                epaper.fastUpdate(prevBuffer, buffer);
+            }
+
             memcpy(prevBuffer, buffer, sizeof(buffer));
+            updateCount++;
         }
-        
+
         frameCount++;
-        
-        // Game speed - ~30 FPS
         TYME::delay(33);
     }
 
