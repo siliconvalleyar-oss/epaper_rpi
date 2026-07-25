@@ -25,17 +25,17 @@ DinoGame::DinoGame() {
 DinoGame::~DinoGame() {}
 
 bool DinoGame::loadSprites() {
-    const char* paths[4] = {
-        "assets/dino_run_00.png",
-        "assets/dino_run_01.png",
-        "assets/dino_run_02.png",
-        "assets/dino_run_03.png"
+    const char* paths[3] = {
+        "assets/dino_48pixels_00.png",
+        "assets/dino_48pixels_01.png",
+        "assets/dino_48pixels_02.png"
     };
+    const int NUM_SPRITES = 3;
 
     int maxW = 0, maxH = 0;
-    SpriteData loaded[4];
+    SpriteData loaded[NUM_SPRITES];
 
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < NUM_SPRITES; i++) {
         loaded[i] = loadPNGMonochrome(paths[i]);
         if (loaded[i].width <= 0 || loaded[i].height <= 0)
             return false;
@@ -47,7 +47,7 @@ bool DinoGame::loadSprites() {
     m_dinoH = maxH;
 
     int bytesPerRow = (maxW + 7) / 8;
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < NUM_SPRITES; i++) {
         SpriteData& src = loaded[i];
         int srcBPR = (src.width + 7) / 8;
         m_dinoSprites[i].width  = maxW;
@@ -215,7 +215,7 @@ void DinoGame::drawSpriteData(uint8_t* buffer, const SpriteData& sprite, int x, 
 
 void DinoGame::drawDino(uint8_t* buffer, int x, int y) {
     if (m_spritesLoaded) {
-        int frame = (m_frameCount / 5) % 4;
+        int frame = (m_frameCount / 5) % 3;
         drawSpriteData(buffer, m_dinoSprites[frame], x, y);
         return;
     }
