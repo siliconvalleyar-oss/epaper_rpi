@@ -207,11 +207,10 @@ void EPD_Driver::COG_initial() {
     // Soft reset
     softReset();
     
-    // Configuración de temperatura
-    uint8_t temp = 25;
-    sendIndexData(0xe5, &temp, 1);  // Input Temperature: 25C
-    sendIndexData(0xe0, &register_data[2], 1);  // Active Temperature
-    sendIndexData(0x00, &register_data[3], 2);  // PSR
+    // Configuración de temperatura y PSR
+    sendIndexData(0xE5, &register_data[2], 1);  // Input Temperature
+    sendIndexData(0xE0, &register_data[3], 1);  // Active Temperature
+    sendIndexData(0x00, &register_data[4], 2);  // PSR
 }
 
 void EPD_Driver::sendIndexData(uint8_t index, const uint8_t *data, uint32_t len) {
@@ -283,11 +282,11 @@ void EPD_Driver::displayRefresh() {
 void EPD_Driver::globalUpdate(const uint8_t *data1s, const uint8_t *data2s) {
     (void)data2s;
     // Soft-reset + re-inicialización (necesarios antes de cada ciclo de update)
-    softReset();
-    uint8_t temp = 25;
-    sendIndexData(0xe5, &temp, 1);               // Input Temperature
-    sendIndexData(0xe0, &register_data[2], 1);    // Active Temperature
-    sendIndexData(0x00, &register_data[3], 2);    // PSR
+    sendIndexData(0x00, &register_data[1], 1);
+    delay_ms(5);
+    sendIndexData(0xE5, &register_data[2], 1);   // Input Temperature
+    sendIndexData(0xE0, &register_data[3], 1);   // Active Temperature
+    sendIndexData(0x00, &register_data[4], 2);   // PSR
 
     // Enviar primer frame
     sendIndexData(0x10, data1s, image_data_size);
