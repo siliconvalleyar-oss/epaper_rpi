@@ -167,27 +167,27 @@ int main() {
     // Mostrar información de GPIOs
     epaper->printGpios();
 
-    // Global Update - QR directo (normal: QR en 0x10, vacío en 0x13)
+    // 1. QR Code (global)
     std::cout << "Actualización 1: QR Code (global)" << std::endl;
     epaper->globalUpdate(BW_QrBuffer, BW_0x00Buffer);
     TYME::delay(1000);
 
-    // Fast Update - Limpiar pantalla
-    std::cout << "Actualización 2: Limpiando (fast)" << std::endl;
-    epaper->fastUpdate(BW_QrBuffer, BW_0x00Buffer);
+    // 2. Limpiar pantalla (global - necesario para resetear estado del EPD)
+    std::cout << "Actualización 2: Limpiando (global)" << std::endl;
+    epaper->globalUpdate(BW_0x00Buffer, BW_0x00Buffer);
+    TYME::delay(1000);
 
-    // Fast Update - Mostrar imagen Mono
+    // 3. Mostrar imagen Mono (fast)
     std::cout << "Actualización 3: Imagen Mono (fast)" << std::endl;
     epaper->fastUpdate(BW_0x00Buffer, BW_monoBuffer);
     TYME::delay(1000);
 
-    // Fast Update - Limpiar pantalla
+    // 4. Limpiar pantalla (fast)
     std::cout << "Actualización 4: Limpiando (fast)" << std::endl;
     epaper->fastUpdate(BW_monoBuffer, BW_0x00Buffer);
+    TYME::delay(1000);
 
-    TYME::delay(10);
-
-    // Fast Update - Mostrar imagen Mono
+    // 5. Mostrar imagen Mono de nuevo (fast)
     std::cout << "Actualización 5: Imagen Mono (fast)" << std::endl;
     epaper->fastUpdate(BW_0x00Buffer, BW_monoBuffer);
 
