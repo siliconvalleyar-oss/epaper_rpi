@@ -85,7 +85,7 @@ void FontManager::setFont(FontType type) {
             currentFont.width = 7;
             currentFont.height = 8;
             currentFont.name = "7x8 Thick";
-            currentFont.start_char = 0;
+            currentFont.start_char = 32;
             currentFont.end_char = 127;
             break;
         case FONT_4x8_SEG:
