@@ -110,6 +110,20 @@ void DinoGame::jump() {
     }
 }
 
+void DinoGame::autoJump() {
+    // Auto-jump when cactus is within jump range
+    if (!m_jumping && !m_gameOver) {
+        int jumpZone = DINO_X + DINO_W + 40;  // Jump when cactus is 40px ahead
+        if (m_cactusX < jumpZone && m_cactusX > DINO_X - 20) {
+            m_dinoVelY = JUMP_FORCE;
+            m_jumping = true;
+        }
+    } else if (m_gameOver) {
+        // Auto-restart after game over
+        reset();
+    }
+}
+
 void DinoGame::update() {
     if (m_gameOver) return;
     

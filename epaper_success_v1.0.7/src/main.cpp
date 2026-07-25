@@ -70,18 +70,14 @@ int main() {
     epaper.globalUpdate(buffer, buffer);
     TYME::delay(1000);
 
-    std::cout << "Juego iniciado! Presiona el boton para saltar.\n" << std::endl;
+    std::cout << "Juego iniciado! Modo demo: dino salta solo.\n" << std::endl;
     
     int frameCount = 0;
 
     // Main game loop
     while (running) {
-        // Check button
-        bool currentButton = (bcm2835_gpio_lev(BUTTON_PIN) == LOW);
-        if (currentButton && !buttonPressed) {
-            game.jump();
-        }
-        buttonPressed = currentButton;
+        // Auto-jump demo mode
+        game.autoJump();
         
         // Update game
         game.update();

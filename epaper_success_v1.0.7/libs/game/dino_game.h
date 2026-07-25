@@ -44,10 +44,13 @@ public:
     
     // Input
     void jump();
+    void autoJump();  // Auto-jump when cactus approaches
     
     // State
     bool isGameOver() const { return m_gameOver; }
     int getScore() const { return m_score; }
+    int getCactusX() const { return m_cactusX; }
+    bool isJumping() const { return m_jumping; }
     void reset();
 
 private:
