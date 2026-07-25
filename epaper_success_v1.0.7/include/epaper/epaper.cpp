@@ -324,7 +324,7 @@ void EPD_Driver::fastUpdate(const uint8_t *oldData, const uint8_t *newData) {
     uint8_t psrFast[2] = { register_data[4] | 0x10, register_data[5] | 0x02 };
     sendIndexData(0x00, psrFast, 2);
 
-    sendCommandData8(0x50, 0x07);
+    sendCommandData8(0x50, 0x97);
 
     // Fast update: 0x10=OLD image, 0x13=NEW image (swapped)
     sendIndexData(0x10, oldData, image_data_size);

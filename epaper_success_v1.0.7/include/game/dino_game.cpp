@@ -321,6 +321,57 @@ void DinoGame::drawScore(uint8_t* buffer) {
     }
 }
 
+void DinoGame::renderSplash(uint8_t* buffer) {
+    memset(buffer, 0x00, (SCREEN_W * SCREEN_H) / 8);
+
+    int dinoCenterX = (SCREEN_W - m_dinoW) / 2;
+    int dinoCenterY = (SCREEN_H - m_dinoH) / 2 - 10;
+
+    if (m_spritesLoaded) {
+        drawSpriteData(buffer, m_dinoSprites[0], dinoCenterX, dinoCenterY);
+    } else {
+        drawSprite(buffer, sprite_dino_run1, (SCREEN_W - 32) / 2, (SCREEN_H - 32) / 2 - 10);
+    }
+
+    FontManager fm;
+    fm.setFont(FONT_7x8_THICK);
+
+    const char* title = "DINO GAME";
+    int x = (SCREEN_W - 9 * 8) / 2;
+    for (int i = 0; title[i] != '\0'; i++) {
+        const uint8_t* bitmap = fm.getCharBitmap(title[i]);
+        if (bitmap) {
+            for (int col = 0; col < 7; col++) {
+                uint8_t byte = bitmap[col];
+                for (int row = 0; row < 8; row++) {
+                    if ((byte >> row) & 0x01) {
+                        drawPixel(buffer, x + col, 10 + row);
+                    }
+                }
+            }
+        }
+        x += 8;
+    }
+
+    fm.setFont(FONT_5x8);
+    const char* press = "Presiona boton para iniciar";
+    x = (SCREEN_W - 27 * 6) / 2;
+    for (int i = 0; press[i] != '\0'; i++) {
+        const uint8_t* bitmap = fm.getCharBitmap(press[i]);
+        if (bitmap) {
+            for (int col = 0; col < 5; col++) {
+                uint8_t byte = bitmap[col];
+                for (int row = 0; row < 8; row++) {
+                    if ((byte >> row) & 0x01) {
+                        drawPixel(buffer, x + col, SCREEN_H - 25 + row);
+                    }
+                }
+            }
+        }
+        x += 6;
+    }
+}
+
 void DinoGame::render(uint8_t* buffer) {
     memset(buffer, 0x00, (SCREEN_W * SCREEN_H) / 8);
     

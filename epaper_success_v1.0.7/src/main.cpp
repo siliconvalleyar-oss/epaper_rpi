@@ -68,8 +68,15 @@ int main() {
     uint8_t prevBuffer[(SCREEN_W * SCREEN_H) / 8];
     memset(buffer, 0x00, sizeof(buffer));
     memset(prevBuffer, 0x00, sizeof(prevBuffer));
-    
-    // Initial render
+
+    // Splash screen
+    std::cout << "Mostrando presentacion..." << std::endl;
+    game.renderSplash(buffer);
+    memcpy(prevBuffer, buffer, sizeof(buffer));
+    epaper.globalUpdate(buffer, buffer);
+    TYME::delay(3000);
+
+    // Initial game render
     game.render(buffer);
     memcpy(prevBuffer, buffer, sizeof(buffer));
     epaper.globalUpdate(buffer, buffer);
@@ -78,25 +85,26 @@ int main() {
     
     int frameCount = 0;
     int updateCount = 0;
-    const int GLOBAL_UPDATE_INTERVAL = 30;
+    const int GLOBAL_UPDATE_INTERVAL = 10;
 
     // Main game loop
     while (running) {
         game.autoJump();
         game.update();
-        
-        if (frameCount % 3 == 0 && !epaper.isBusy()) {
+
+        if (frameCount % 3 == 0) {
             game.render(buffer);
 
-            if (updateCount >= GLOBAL_UPDATE_INTERVAL) {
-                epaper.globalUpdate(buffer, buffer);
-                updateCount = 0;
-            } else {
-                epaper.fastUpdate(prevBuffer, buffer);
+            if (!epaper.isBusy()) {
+                if (updateCount >= GLOBAL_UPDATE_INTERVAL) {
+                    epaper.globalUpdate(buffer, buffer);
+                    updateCount = 0;
+                } else {
+                    epaper.fastUpdate(prevBuffer, buffer);
+                }
+                memcpy(prevBuffer, buffer, sizeof(buffer));
+                updateCount++;
             }
-
-            memcpy(prevBuffer, buffer, sizeof(buffer));
-            updateCount++;
         }
 
         frameCount++;

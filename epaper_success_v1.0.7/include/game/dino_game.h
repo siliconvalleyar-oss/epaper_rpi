@@ -48,6 +48,7 @@ public:
     
     void update();
     void render(uint8_t* buffer);
+    void renderSplash(uint8_t* buffer);
     
     void jump();
     void autoJump();
@@ -69,7 +70,7 @@ private:
     void drawSprite(uint8_t* buffer, const uint8_t* sprite, int x, int y);
     void drawSpriteData(uint8_t* buffer, const SpriteData& sprite, int x, int y);
     
-    SpriteData m_dinoSprites[4];
+    SpriteData m_dinoSprites[3];
     int m_dinoW;
     int m_dinoH;
     bool m_spritesLoaded;
