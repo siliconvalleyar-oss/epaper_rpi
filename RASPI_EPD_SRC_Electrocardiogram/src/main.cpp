@@ -38,7 +38,7 @@ static void signalHandler(int) {
     running = 0;
 }
 
-static void drawChar(uint8_t* buffer, int x, int y, char c, const FontManager& fm) {
+static void drawChar(uint8_t* buffer, int x, int y, char c, FontManager& fm) {
     const uint8_t* bitmap = fm.getCharBitmap(c);
     if (!bitmap) return;
     for (int col = 0; col < 5; col++) {
@@ -56,7 +56,7 @@ static void drawChar(uint8_t* buffer, int x, int y, char c, const FontManager& f
     }
 }
 
-static void drawString(uint8_t* buffer, int x, int y, const char* str, const FontManager& fm) {
+static void drawString(uint8_t* buffer, int x, int y, const char* str, FontManager& fm) {
     for (int i = 0; str[i]; i++) {
         drawChar(buffer, x + i * 6, y, str[i], fm);
     }
