@@ -55,7 +55,7 @@ FontManager::FontManager() {
     currentFont.data = Font_One;
     currentFont.width = 5;
     currentFont.height = 8;
-    currentFont.start_char = 32;
+    currentFont.start_char = 0;
     currentFont.end_char = 127;
     currentFont.name = "Standard 5x8";
 }
@@ -71,49 +71,49 @@ void FontManager::setFont(FontType type) {
             currentFont.width = 8;
             currentFont.height = 8;
             currentFont.name = "8x8 (myc64_lower)";
-            currentFont.start_char = 32;
+            currentFont.start_char = 0;
             currentFont.end_char = 127;
             break;
         case FONT_5x8:
             currentFont.width = 5;
             currentFont.height = 8;
             currentFont.name = "5x8 Standard";
-            currentFont.start_char = 32;
+            currentFont.start_char = 0;
             currentFont.end_char = 127;
             break;
         case FONT_7x8_THICK:
             currentFont.width = 7;
             currentFont.height = 8;
             currentFont.name = "7x8 Thick";
-            currentFont.start_char = 32;
+            currentFont.start_char = 0;
             currentFont.end_char = 127;
             break;
         case FONT_4x8_SEG:
             currentFont.width = 4;
             currentFont.height = 8;
             currentFont.name = "4x8 Seven Segment";
-            currentFont.start_char = 32;
+            currentFont.start_char = 0;
             currentFont.end_char = 127;
             break;
         case FONT_8x8_WIDE:
             currentFont.width = 8;
             currentFont.height = 8;
             currentFont.name = "8x8 Wide";
-            currentFont.start_char = 32;
+            currentFont.start_char = 0;
             currentFont.end_char = 127;
             break;
         case FONT_3x8_TINY:
             currentFont.width = 3;
             currentFont.height = 8;
             currentFont.name = "3x8 Tiny";
-            currentFont.start_char = 32;
+            currentFont.start_char = 0;
             currentFont.end_char = 127;
             break;
         case FONT_7x8_HOMESPUN:
             currentFont.width = 7;
             currentFont.height = 8;
             currentFont.name = "7x8 Homespun";
-            currentFont.start_char = 32;
+            currentFont.start_char = 0;
             currentFont.end_char = 127;
             break;
         case FONT_16x32_BIGNUM:
@@ -185,16 +185,17 @@ void FontManager::printChar(char c) {
                 }
             } else {
                 // Big number fonts: bitmap is row-major (16x16 or 16x32)
-                // For demonstration, show a simplified representation
+                // Each row: data[row*2] = cols 8-15, data[row*2+1] = cols 0-7, LSB=left
                 if (row < currentFont.height && col < currentFont.width) {
-                    int byteIndex = (row * (currentFont.width / 8)) + (col / 8);
-                    int bitIndex = 7 - (col % 8);
-                    if (byteIndex < (int)charSize) {
-                        bool pixel = (bitmap[byteIndex] >> bitIndex) & 0x01;
-                        std::cout << (pixel ? "#" : " ");
+                    int hi = bitmap[row * 2];
+                    int lo = bitmap[row * 2 + 1];
+                    bool pixel;
+                    if (col < 8) {
+                        pixel = (lo >> col) & 1;
                     } else {
-                        std::cout << " ";
+                        pixel = (hi >> (col - 8)) & 1;
                     }
+                    std::cout << (pixel ? "#" : " ");
                 }
             }
         }

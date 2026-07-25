@@ -33,7 +33,7 @@ Spi_t::Spi_t() {
     bcm2835_spi_begin();
     bcm2835_spi_setBitOrder(BCM2835_SPI_BIT_ORDER_MSBFIRST);
     bcm2835_spi_setDataMode(BCM2835_SPI_MODE0);
-    bcm2835_spi_setClockDivider(BCM2835_SPI_CLOCK_DIVIDER_128); // ~1.95 MHz (2x más rápido)
+    bcm2835_spi_setClockDivider(BCM2835_SPI_CLOCK_DIVIDER_32); // ~7.8 MHz (bajo el límite de 10 MHz)
     
     // Deshabilitar CS hardware, usamos CS manual por GPIO
     bcm2835_spi_chipSelect(BCM2835_SPI_CS_NONE);
@@ -281,8 +281,14 @@ void EPD_Driver::displayRefresh() {
 }
 
 void EPD_Driver::globalUpdate(const uint8_t *data1s, const uint8_t *data2s) {
+    softReset();
+    sendIndexData(0xe5, &register_data[2], 1);
+    sendIndexData(0xe0, &register_data[3], 1);
+    sendIndexData(0x00, &register_data[4], 2);
+
     sendIndexData(0x10, data1s, image_data_size);
     sendIndexData(0x13, data2s, image_data_size);
+
     DCDC_powerOn();
     displayRefresh();
 }
@@ -321,19 +327,15 @@ void EPD_Driver::fastUpdate(const uint8_t *oldData, const uint8_t *newData) {
         return;
     }
 
-    // Soft-reset antes de cada fast update
-    sendIndexData(0x00, &register_data[1], 1);
-    delay_ms(5);
+    softReset();
 
-    // Fast update flags: temp|0x40, PSR|0x10|0x02, CDI=0x07
     uint8_t tempFast = register_data[2] | 0x40;
     sendCommandData8(0xE5, tempFast);
 
     sendCommandData8(0xE0, register_data[3]);
 
-    uint8_t psrFast0 = register_data[4] | 0x10;
-    uint8_t psrFast1 = register_data[5] | 0x02;
-    sendIndexData(0x00, &psrFast0, 2);
+    uint8_t psrFast[2] = { register_data[4] | 0x10, register_data[5] | 0x02 };
+    sendIndexData(0x00, psrFast, 2);
 
     sendCommandData8(0x50, 0x07);
 
