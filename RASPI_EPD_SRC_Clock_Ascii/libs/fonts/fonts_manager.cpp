@@ -184,17 +184,12 @@ void FontManager::printChar(char c) {
                     std::cout << " ";
                 }
             } else {
-                // Big number fonts: bitmap is row-major (16x16 or 16x32)
-                // Each row: data[row*2] = cols 8-15, data[row*2+1] = cols 0-7, LSB=left
+                // Big number fonts: column-major, MSB=top (same as drawCharToBuffer)
                 if (row < currentFont.height && col < currentFont.width) {
-                    int hi = bitmap[row * 2];
-                    int lo = bitmap[row * 2 + 1];
-                    bool pixel;
-                    if (col < 8) {
-                        pixel = (lo >> col) & 1;
-                    } else {
-                        pixel = (hi >> (col - 8)) & 1;
-                    }
+                    int bytesPerCol = currentFont.height / 8;
+                    int byteIndex = col * bytesPerCol + (row / 8);
+                    int bitIndex = 7 - (row % 8);
+                    bool pixel = (bitmap[byteIndex] >> bitIndex) & 0x01;
                     std::cout << (pixel ? "#" : " ");
                 }
             }
