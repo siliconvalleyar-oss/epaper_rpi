@@ -335,7 +335,7 @@ void EPD_Driver::fastUpdate(const uint8_t *oldData, const uint8_t *newData) {
 
     sendCommandData8(0xE0, register_data[3]);
 
-    uint8_t psrFast[2] = { register_data[4] | 0x10, register_data[5] | 0x02 };
+    uint8_t psrFast[2] = { static_cast<uint8_t>(register_data[4] | 0x10), static_cast<uint8_t>(register_data[5] | 0x02) };
     sendIndexData(0x00, psrFast, 2);
 
     sendCommandData8(0x50, 0x07);

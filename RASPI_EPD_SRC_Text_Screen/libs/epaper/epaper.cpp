@@ -309,14 +309,13 @@ void EPD_Driver::fastUpdate(const uint8_t *oldData, const uint8_t *newData) {
     }
     if (!hasChanges) return;
 
-    sendIndexData(0x00, &register_data[1], 1);
-    delay_ms(5);
+    softReset();
 
     uint8_t tempFast = register_data[2] | 0x40;
     sendIndexData(0xE5, &tempFast, 1);
     sendIndexData(0xE0, &register_data[3], 1);
 
-    uint8_t psrFast[2] = { register_data[4] | 0x10, register_data[5] | 0x02 };
+    uint8_t psrFast[2] = { static_cast<uint8_t>(register_data[4] | 0x10), static_cast<uint8_t>(register_data[5] | 0x02) };
     sendIndexData(0x00, psrFast, 2);
 
     uint8_t cdi = 0x07;
