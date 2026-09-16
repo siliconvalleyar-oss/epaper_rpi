@@ -20,16 +20,16 @@ int main()
 	std::cout << "EPD v1.4.0 - Restored from working 1.0.1 driver" << std::endl;
 	std::cout << "SPI clock divider: 256 (~976 KHz)" << std::endl;
 
-	EPD_Driver driver(eScreen_EPD_266, boardRaspberryPiZero2W_EXT3);
+	EPD_Driver driver(eScreen_EPD_213, boardRaspberryPiZero2W_EXT3);
 
 	std::cout << "COG init..." << std::endl;
 	driver.COG_initial();
 	std::cout << "  COG ready" << std::endl;
 
-	uint8_t *black = new uint8_t[5624];
-	uint8_t *white = new uint8_t[5624];
-	memset(black, 0x00, 5624);
-	memset(white, 0xff, 5624);
+	uint8_t *black = new uint8_t[2756];
+	uint8_t *white = new uint8_t[2756];
+	memset(black, 0x00, 2756);
+	memset(white, 0xff, 2756);
 
 	std::cout << "Sending BLACK image..." << std::endl;
 	driver.globalUpdate(black, NULL);
