@@ -75,7 +75,7 @@ int main() {
     }
 
     auto display = std::make_unique<EPAPER_DISPLAY::EpaperDisplay>(
-        eScreen_EPD_266, EPAPER::boardRaspberryPi
+        eScreen_EPD_213, EPAPER::boardRaspberryPi
     );
     if (!display->init()) {
         std::cerr << "ERROR: display init failed" << std::endl;
@@ -109,7 +109,7 @@ int main() {
         int y = 0;
         display->drawCenteredString(y, "BITCOIN", FONT_7x8_THICK, true);
         y += 10;
-        display->drawLine(10, y, 285, y, true);
+        display->drawLine(8, y, 204, y, true);
         y += 6;
 
         if (btcPrice > 0) {
@@ -119,7 +119,7 @@ int main() {
             for (char c : ps) if (c >= '0' && c <= '9') digitCount++;
             int dollarW = display->getTextWidth("$", FONT_5x8);
             int totalW = dollarW + 4 + digitCount * 17;
-            int x0 = (296 - totalW) / 2;
+            int x0 = (212 - totalW) / 2;
             if (x0 < 0) x0 = 0;
 
             display->drawString(x0, y + 10, "$", FONT_5x8, true);
