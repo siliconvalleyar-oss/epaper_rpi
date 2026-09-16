@@ -41,7 +41,7 @@ sudo ./bin/dino_game
 
 ## Estructura
 ```
-epaper_success_v1.0.7/
+RASPI_EPD_SRC_Dino_Game/
 ├── src/main.cpp          # Main loop + input handling
 ├── libs/
 │   ├── game/

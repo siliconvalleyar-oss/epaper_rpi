@@ -74,10 +74,8 @@ int main() {
     std::cout << "Juego iniciado! Modo demo: dino salta solo.\n" << std::endl;
     
     int frameCount = 0;
-    int updateCount = 0;
-    const int GLOBAL_UPDATE_INTERVAL = 10;
 
-    // Main game loop
+    // Main game loop — solo fastUpdate (sin globalUpdate periódico para evitar flash)
     while (running) {
         game.autoJump();
         game.update();
@@ -86,14 +84,8 @@ int main() {
             game.render(buffer);
 
             if (!epaper.isBusy()) {
-                if (updateCount >= GLOBAL_UPDATE_INTERVAL) {
-                    epaper.globalUpdate(buffer, buffer);
-                    updateCount = 0;
-                } else {
-                    epaper.fastUpdate(prevBuffer, buffer);
-                }
+                epaper.fastUpdate(prevBuffer, buffer);
                 memcpy(prevBuffer, buffer, sizeof(buffer));
-                updateCount++;
             }
         }
 

@@ -133,6 +133,10 @@ void DinoGame::update() {
         m_dinoY += m_dinoVelY;
         m_dinoVelY += GRAVITY;
         
+        if (m_dinoY < 0) {
+            m_dinoY = 0;
+        }
+        
         if (m_dinoY >= GROUND_Y - m_dinoH) {
             m_dinoY = GROUND_Y - m_dinoH;
             m_dinoVelY = 0;
