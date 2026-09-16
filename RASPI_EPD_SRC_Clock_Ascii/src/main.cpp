@@ -4,7 +4,7 @@
 //          Description         :   E-Paper Clock - Reloj en pantalla e-paper
 //          License             :   GNU
 //          Author              :   Lio
-//          Hardware            :   Raspberry Pi Zero 2W + e-Paper 2.66" (296x152)
+//          Hardware            :   Raspberry Pi Zero 2W + e-Paper configurable
 //          Complier            :   g++
 //          Dependencies        :   bcm2835
 //
@@ -24,17 +24,38 @@
 
 #define SCREEN 213
 
-// Layout de la pantalla (296 x 152 pixeles):
-//
-//   y=5:   "E-PAPER CLOCK"       FONT_5x8      (h=8)
-//   y=18:  ───────────────       linea horizontal
-//   y=22:  "12:34:56"            FONT_16x16_MEDNUM (h=16)  → y=22..37
-//   y=42:  ───────────────       linea horizontal
-//   y=48:  "2026-07-24"          FONT_5x8      (h=8)   → y=48..55
-//   y=65:  "DOMINGO"             FONT_7x8_THICK(h=8)   → y=65..72
-//   y=85:  "UP: 00:05:32"        FONT_5x8      (h=8)   → y=85..92
-//   y=105: ───────────────       linea horizontal
-//
+struct ScreenLayout {
+    int width;
+    int height;
+    int lineStartX;
+    int lineEndX;
+    int titleY;
+    int line1Y;
+    int timeY;
+    int line2Y;
+    int dateY;
+    int dayY;
+    int uptimeY;
+    int line3Y;
+};
+
+static ScreenLayout getLayout(int screen) {
+    if (screen == 213) {
+        return {
+            212, 104,
+            8, 204,
+            5, 14, 16, 32,
+            36, 46, 58,
+            72
+        };
+    }
+    return {
+        296, 152,
+        10, 285,
+        5, 18, 22, 42,
+        48, 65, 85, 105
+    };
+}
 
 static volatile sig_atomic_t running = 1;
 
@@ -76,8 +97,11 @@ int main() {
     signal(SIGINT, signalHandler);
     signal(SIGTERM, signalHandler);
 
+    uint32_t screenType = (SCREEN == 213) ? eScreen_EPD_213 : eScreen_EPD_266;
+    ScreenLayout layout = getLayout(SCREEN);
+
     std::cout << "=== E-PAPER CLOCK ===" << std::endl;
-    std::cout << "Pantalla: 2.66\" (296x152)" << std::endl;
+    std::cout << "Pantalla: " << (SCREEN == 213 ? "2.13\" (212x104)" : "2.66\" (296x152)") << std::endl;
     std::cout << "Fuente reloj: FONT_16x16_MEDNUM (16x16 medium numbers)" << std::endl;
     std::cout << "Presiona Ctrl+C para salir\n" << std::endl;
 
@@ -87,7 +111,7 @@ int main() {
     }
 
     EPAPER_DISPLAY::EpaperDisplay display(
-        eScreen_EPD_266,
+        screenType,
         EPAPER::boardRaspberryPiZero2W
     );
 
@@ -110,23 +134,21 @@ int main() {
 
         display.clearScreen(true);
 
-        display.drawCenteredString(5, "E-PAPER CLOCK", FONT_5x8, true);
+        display.drawCenteredString(layout.titleY, "E-PAPER CLOCK", FONT_5x8, true);
 
-        int lineY1 = 18;
-        display.drawLine(10, lineY1, 285, lineY1, true);
+        display.drawLine(layout.lineStartX, layout.line1Y, layout.lineEndX, layout.line1Y, true);
 
-        display.drawCenteredString(22, formatTime(t), FONT_16x16_MEDNUM, true);
+        display.drawCenteredString(layout.timeY, formatTime(t), FONT_16x16_MEDNUM, true);
 
-        int lineY2 = 42;
-        display.drawLine(10, lineY2, 285, lineY2, true);
+        display.drawLine(layout.lineStartX, layout.line2Y, layout.lineEndX, layout.line2Y, true);
 
-        display.drawCenteredString(48, formatDate(t), FONT_5x8, true);
+        display.drawCenteredString(layout.dateY, formatDate(t), FONT_5x8, true);
 
-        display.drawCenteredString(65, formatDay(t), FONT_7x8_THICK, true);
+        display.drawCenteredString(layout.dayY, formatDay(t), FONT_7x8_THICK, true);
 
-        display.drawCenteredString(85, formatUptime(uptime), FONT_5x8, true);
+        display.drawCenteredString(layout.uptimeY, formatUptime(uptime), FONT_5x8, true);
 
-        display.drawLine(10, 105, 285, 105, true);
+        display.drawLine(layout.lineStartX, layout.line3Y, layout.lineEndX, layout.line3Y, true);
 
         bool changed = display.update();
 
