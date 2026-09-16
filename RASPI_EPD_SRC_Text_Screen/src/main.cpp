@@ -79,7 +79,7 @@ int main() {
         return 1;
     }
 
-    EPAPER_DISPLAY::EpaperDisplay display(eScreen_EPD_266, EPAPER::boardRaspberryPiZero2W);
+    EPAPER_DISPLAY::EpaperDisplay display(eScreen_EPD_213, EPAPER::boardRaspberryPiZero2W);
     if (!display.init()) {
         std::cerr << "Error display.init()" << std::endl;
         bcm2835_close();
