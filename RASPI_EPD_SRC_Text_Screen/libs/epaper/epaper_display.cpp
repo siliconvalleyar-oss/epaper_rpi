@@ -8,6 +8,7 @@ namespace EPAPER_DISPLAY {
 
 EpaperDisplay::EpaperDisplay(uint32_t screen_type, const EPAPER::pins_t& board_config)
     : m_buffer(nullptr)
+    , m_prevBuffer(nullptr)
     , m_width(0)
     , m_height(0)
     , m_bufferSize(0)
@@ -39,8 +40,10 @@ EpaperDisplay::EpaperDisplay(uint32_t screen_type, const EPAPER::pins_t& board_c
     // Calcular tamaño del buffer
     m_bufferSize = (m_width * m_height) / 8;
     
-    // Crear buffer con new (asegurar que se inicializa a 0)
-    m_buffer = new uint8_t[m_bufferSize]();  // ← Importante: los paréntesis inicializan a cero
+    // Crear buffers con new
+    m_buffer = new uint8_t[m_bufferSize]();
+    m_prevBuffer = new uint8_t[m_bufferSize]();
+    memset(m_prevBuffer, 0xFF, m_bufferSize);
     
     // Crear driver
     m_driver = std::make_unique<EPAPER::EPD_Driver>(screen_type, m_boardConfig);
@@ -53,6 +56,10 @@ EpaperDisplay::~EpaperDisplay() {
     if (m_buffer) {
         delete[] m_buffer;
         m_buffer = nullptr;
+    }
+    if (m_prevBuffer) {
+        delete[] m_prevBuffer;
+        m_prevBuffer = nullptr;
     }
 }
 
@@ -81,9 +88,11 @@ void EpaperDisplay::clearScreen(bool white) {
 
 void EpaperDisplay::update() {
     if (!m_driver || !m_buffer) return;
-    
-    // Enviar buffer al display - igual que en tu código que funciona
-    m_driver->globalUpdate(m_buffer, m_buffer);
+
+    if (memcmp(m_buffer, m_prevBuffer, m_bufferSize) == 0) return;
+
+    m_driver->fastUpdate(m_prevBuffer, m_buffer);
+    memcpy(m_prevBuffer, m_buffer, m_bufferSize);
 }
 
 void EpaperDisplay::drawPixel(int x, int y, bool black) {

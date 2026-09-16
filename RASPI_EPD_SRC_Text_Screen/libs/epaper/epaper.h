@@ -88,13 +88,14 @@ protected:
 struct EPD_Driver : public Gpio_t {
 public:
     explicit EPD_Driver(uint32_t eScreen_EPD, const pins_t& board);
-    ~EPD_Driver() = default;
+    ~EPD_Driver();
     
     // Funciones principales
     uint8_t hV_HAL_SPI_transfer(uint8_t data);
     void COG_initial();
     void COG_powerOff();
     void globalUpdate(const uint8_t *data1s, const uint8_t *data2s);
+    void fastUpdate(const uint8_t *oldData, const uint8_t *newData);
     
     // Funciones auxiliares
     void printGpios();  // Declaración del método
@@ -119,6 +120,7 @@ protected:
 private:
     std::unique_ptr<Spi_t> spi_ptr;
     const pins_t pin_cfg_epaper;
+    uint8_t* m_zeroFrame;
 };
 
 } // namespace EPAPER
