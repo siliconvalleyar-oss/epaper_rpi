@@ -15,15 +15,15 @@
 #include "png_loader.h"
 
 // Screen dimensions
-#define SCREEN_W 296
-#define SCREEN_H 152
+#define SCREEN_W 212
+#define SCREEN_H 104
 
 // Game area
-#define GROUND_Y    130
-#define SKY_Y       20
+#define GROUND_Y    90
+#define SKY_Y       10
 
 // Dino position
-#define DINO_X      30
+#define DINO_X      20
 
 // Bird size (32x32 sprites)
 #define BIRD_W      32
