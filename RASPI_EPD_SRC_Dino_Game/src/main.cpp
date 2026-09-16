@@ -20,7 +20,7 @@
 #include <app/config.h>
 #include <game/dino_game.h>
 
-#define SCREEN 266
+#define SCREEN 213
 #define BUTTON_PIN RPI_V2_GPIO_P1_07  // GPIO4 - button for jump
 
 static volatile sig_atomic_t running = 1;
@@ -37,7 +37,7 @@ int main() {
     signal(SIGTERM, signalHandler);
 
     std::cout << "=== E-PAPER DINO GAME ===" << std::endl;
-    std::cout << "Pantalla: 2.66\" (296x152)" << std::endl;
+    std::cout << "Pantalla: 2.13\" (212x104)" << std::endl;
     std::cout << "Presiona Ctrl+C para salir\n" << std::endl;
 
     if (!bcm2835_init()) {
@@ -49,7 +49,7 @@ int main() {
     bcm2835_gpio_fsel(BUTTON_PIN, BCM2835_GPIO_FSEL_INPT);
     bcm2835_gpio_set_pud(BUTTON_PIN, BCM2835_GPIO_PUD_UP);
 
-    EPAPER::EPD_Driver epaper(eScreen_EPD_266, EPAPER::boardRaspberryPiZero2W);
+    EPAPER::EPD_Driver epaper(eScreen_EPD_213, EPAPER::boardRaspberryPiZero2W);
 
     std::cout << "Inicializando COG..." << std::endl;
     epaper.COG_initial();
