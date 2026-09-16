@@ -1,27 +1,51 @@
 # E-Paper Clock - RASPI_EPD_SRC_Clock_Ascii
 
-Reloj en pantalla e-paper 2.66" (296x152) para Raspberry Pi Zero 2W.
+Reloj en pantalla e-paper configurable (2.13" o 2.66") para Raspberry Pi Zero 2W.
 
 ## Que hace
 
 Muestra un reloj en tiempo real con:
-- Hora: `HH:MM:SS` en fuente grande (FONT_16x32_BIGNUM, 16x32 pixeles)
+- Hora: `HH:MM:SS` en fuente mediana (FONT_16x16_MEDNUM, 16x16 pixeles)
 - Fecha: `YYYY-MM-DD` en fuente 5x8
 - Dia de la semana: en fuente 7x8 THICK
 - Tiempo de actividad: `UP: HH:MM:SS`
 - Lineas separadoras horizontales
 
-## Layout de pantalla (296x152)
+## Configuracion de pantalla
 
+Edita `src/main.cpp` y cambia la macro `SCREEN`:
+
+```cpp
+#define SCREEN 213   // 2.13" (212x104)
+#define SCREEN 266   // 2.66" (296x152)
 ```
-y=8:    "E-PAPER CLOCK"       FONT_5x8
-y=22:   ───────────────
-y=32:   "12:34:56"            FONT_16x32 (centrado)
-y=70:   ───────────────
-y=82:   "2026-07-24"          FONT_5x8
-y=100:  "DOMINGO"             FONT_7x8_THICK
-y=120:  "UP: 00:05:32"        FONT_5x8
-y=140:  ───────────────
+
+El layout se ajusta automaticamente segun el display seleccionado.
+
+## Layout de pantalla
+
+### 2.13" (212x104)
+```
+y=5:    "E-PAPER CLOCK"       FONT_5x8
+y=16:   ───────────────
+y=18:   "12:34:56"            FONT_16x16_MEDNUM (centrado)
+y=38:   ───────────────
+y=42:   "2026-07-24"          FONT_5x8
+y=55:   "DOMINGO"             FONT_7x8_THICK
+y=68:   "UP: 00:05:32"        FONT_5x8
+y=80:   ───────────────
+```
+
+### 2.66" (296x152)
+```
+y=5:    "E-PAPER CLOCK"       FONT_5x8
+y=18:   ───────────────
+y=22:   "12:34:56"            FONT_16x16_MEDNUM (centrado)
+y=42:   ───────────────
+y=48:   "2026-07-24"          FONT_5x8
+y=65:   "DOMINGO"             FONT_7x8_THICK
+y=85:   "UP: 00:05:32"        FONT_5x8
+y=105:  ───────────────
 ```
 
 ## Compilar y ejecutar
