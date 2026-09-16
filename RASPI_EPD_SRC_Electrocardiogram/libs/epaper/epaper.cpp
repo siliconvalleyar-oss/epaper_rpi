@@ -33,7 +33,7 @@ Spi_t::Spi_t() {
     bcm2835_spi_begin();
     bcm2835_spi_setBitOrder(BCM2835_SPI_BIT_ORDER_MSBFIRST);
     bcm2835_spi_setDataMode(BCM2835_SPI_MODE0);
-    bcm2835_spi_setClockDivider(BCM2835_SPI_CLOCK_DIVIDER_256); // ~976 KHz (igual que referencia)
+    bcm2835_spi_setClockDivider(BCM2835_SPI_CLOCK_DIVIDER_32); // ~7.8 MHz (bajo el límite de 10 MHz)
     
     // Deshabilitar CS hardware, usamos CS manual por GPIO
     bcm2835_spi_chipSelect(BCM2835_SPI_CS_NONE);
@@ -75,6 +75,7 @@ EPD_Driver::EPD_Driver(uint32_t eScreen_EPD, const pins_t& board)
     : Gpio_t(true)
     , spi_ptr(std::make_unique<Spi_t>())
     , pin_cfg_epaper(board)
+    , m_zeroFrame(nullptr)
 {
     // Tipo de pantalla
     pdi_size = (uint16_t)(eScreen_EPD >> 8);
@@ -132,6 +133,12 @@ EPD_Driver::EPD_Driver(uint32_t eScreen_EPD, const pins_t& board)
 
     // Configurar registros según tamaño de pantalla
     memcpy(register_data, register_data_sm, sizeof(register_data_sm));
+
+    m_zeroFrame = new uint8_t[image_data_size]();
+}
+
+EPD_Driver::~EPD_Driver() {
+    delete[] m_zeroFrame;
 }
 
 int EPD_Driver::digitalRead(int gpio) {
@@ -271,13 +278,15 @@ void EPD_Driver::displayRefresh() {
 }
 
 void EPD_Driver::globalUpdate(const uint8_t *data1s, const uint8_t *data2s) {
-    // Enviar primer frame (0x10 = canal negro/BW)
+    (void)data2s;
+    softReset();
+    sendIndexData(0xe5, &register_data[2], 1);
+    sendIndexData(0xe0, &register_data[3], 1);
+    sendIndexData(0x00, &register_data[4], 2);
+
     sendIndexData(0x10, data1s, image_data_size);
+    sendIndexData(0x13, m_zeroFrame, image_data_size);
 
-    // Enviar segundo frame (0x13 = canal rojo/segundo plano)
-    sendIndexData(0x13, data2s, image_data_size);
-
-    // Encender DC/DC y refrescar
     DCDC_powerOn();
     displayRefresh();
 }
@@ -296,15 +305,11 @@ void EPD_Driver::fastUpdate(const uint8_t *oldData, const uint8_t *newData) {
         return;
     }
 
-    // Soft-reset antes de cada fast update
-    sendIndexData(0x00, &register_data[1], 1);
-    delay_ms(5);
+    softReset();
 
-    // Fast update flags: temp|0x40, PSR|0x10|0x02, CDI=0x07
     uint8_t tempFast = register_data[2] | 0x40;
-    sendCommandData8(0xE5, tempFast);
-
-    sendCommandData8(0xE0, register_data[3]);
+    sendIndexData(0xe5, &tempFast, 1);
+    sendIndexData(0xe0, &register_data[3], 1);
 
     uint8_t psrFast[2] = { register_data[4] | 0x10, register_data[5] | 0x02 };
     sendIndexData(0x00, psrFast, 2);
