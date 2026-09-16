@@ -33,14 +33,14 @@ Spi_t::Spi_t() {
     bcm2835_spi_begin();
     bcm2835_spi_setBitOrder(BCM2835_SPI_BIT_ORDER_MSBFIRST);
     bcm2835_spi_setDataMode(BCM2835_SPI_MODE0);
-    bcm2835_spi_setClockDivider(BCM2835_SPI_CLOCK_DIVIDER_256); // ~976 KHz
+    bcm2835_spi_setClockDivider(BCM2835_SPI_CLOCK_DIVIDER_256); // ~976 KHz (igual que referencia)
     
     // Deshabilitar CS hardware, usamos CS manual por GPIO
     bcm2835_spi_chipSelect(BCM2835_SPI_CS_NONE);
 }
 
 Spi_t::~Spi_t() {
-    // Restaurar pines SPI a GPIO input
+    // Restaurar pines SPI (GPIO 9-11) a GPIO input
     bcm2835_spi_end();
 }
 
@@ -75,76 +75,52 @@ EPD_Driver::EPD_Driver(uint32_t eScreen_EPD, const pins_t& board)
     : Gpio_t(true)
     , spi_ptr(std::make_unique<Spi_t>())
     , pin_cfg_epaper(board)
-    , m_zeroFrame(nullptr)
 {
     // Tipo de pantalla
-    pdi_cp = (uint16_t)eScreen_EPD;
     pdi_size = (uint16_t)(eScreen_EPD >> 8);
 
     uint16_t screenSizeV = 0;
     uint16_t screenSizeH = 0;
-    [[maybe_unused]] uint16_t screenDiagonal = 0;
-    [[maybe_unused]] uint16_t refreshTime = 0;
     
-    #ifdef DEBUG
-        std::cout << "debugger step 0" << std::endl;
-    #endif
-
     switch (pdi_size) {
         case 0x15: // 1.54"
             screenSizeV = 152;
             screenSizeH = 152;
-            screenDiagonal = 154;
-            refreshTime = 16;
             break;
 
         case 0x21: // 2.13"
             screenSizeV = 212;
             screenSizeH = 104;
-            screenDiagonal = 213;
-            refreshTime = 15;
             break;
 
         case 0x26: // 2.66"
             screenSizeV = 296;
             screenSizeH = 152;
-            screenDiagonal = 266;
-            refreshTime = 15;
             break;
 
         case 0x27: // 2.71"
             screenSizeV = 264;
             screenSizeH = 176;
-            screenDiagonal = 271;
-            refreshTime = 19;
             break;
 
         case 0x28: // 2.87"
             screenSizeV = 296;
             screenSizeH = 128;
-            screenDiagonal = 287;
-            refreshTime = 14;
             break;
 
         case 0x37: // 3.70"
             screenSizeV = 416;
             screenSizeH = 240;
-            screenDiagonal = 370;
-            refreshTime = 15;
             break;
 
         case 0x41: // 4.17"
             screenSizeV = 300;
             screenSizeH = 400;
-            screenDiagonal = 417;
-            refreshTime = 19;
             break;
 
         case 0x43: // 4.37"
             screenSizeV = 480;
             screenSizeH = 176;
-            screenDiagonal = 437;
-            refreshTime = 21;
             break;
 
         default:
@@ -156,12 +132,6 @@ EPD_Driver::EPD_Driver(uint32_t eScreen_EPD, const pins_t& board)
 
     // Configurar registros según tamaño de pantalla
     memcpy(register_data, register_data_sm, sizeof(register_data_sm));
-
-    m_zeroFrame = new uint8_t[image_data_size]();
-}
-
-EPD_Driver::~EPD_Driver() {
-    delete[] m_zeroFrame;
 }
 
 int EPD_Driver::digitalRead(int gpio) {
@@ -184,10 +154,6 @@ void EPD_Driver::COG_initial() {
     pinMode(pin_cfg_epaper.panelCS, OUTPUT);
     digitalWrite(pin_cfg_epaper.panelCS, HIGH);
     
-    if (pin_cfg_epaper.flashCS != NOT_CONNECTED) {
-        pinMode(pin_cfg_epaper.flashCS, OUTPUT);
-        digitalWrite(pin_cfg_epaper.flashCS, HIGH);
-    }
     if (pin_cfg_epaper.panelON_EXT2 != NOT_CONNECTED) {
         pinMode(pin_cfg_epaper.panelON_EXT2, OUTPUT);
         digitalWrite(pin_cfg_epaper.panelON_EXT2, HIGH);
@@ -207,10 +173,10 @@ void EPD_Driver::COG_initial() {
     // Soft reset
     softReset();
     
-    // Configuración de temperatura y PSR
-    sendIndexData(0xE5, &register_data[2], 1);  // Input Temperature
-    sendIndexData(0xE0, &register_data[3], 1);  // Active Temperature
-    sendIndexData(0x00, &register_data[4], 2);  // PSR
+    // Configuración de temperatura
+    sendIndexData(0xe5, &register_data[2], 1);  // Input Temperature:  register_data[2] = 0x19 (25°C)
+    sendIndexData(0xe0, &register_data[3], 1);  // Active Temperature: register_data[3] = 0x02 (coincide con referencia)
+    sendIndexData(0x00, &register_data[4], 2);  // PSR:              register_data[4..5] = 0xcf, 0x8d (coincide con referencia)
 }
 
 void EPD_Driver::sendIndexData(uint8_t index, const uint8_t *data, uint32_t len) {
@@ -229,15 +195,36 @@ void EPD_Driver::sendIndexData(uint8_t index, const uint8_t *data, uint32_t len)
     }
 }
 
+void EPD_Driver::sendCommand8(uint8_t command) {
+    digitalWrite(pin_cfg_epaper.panelDC, LOW);
+    digitalWrite(pin_cfg_epaper.panelCS, LOW);
+    hV_HAL_SPI_transfer(command);
+    digitalWrite(pin_cfg_epaper.panelCS, HIGH);
+}
+
+void EPD_Driver::sendCommandData8(uint8_t command, uint8_t data) {
+    digitalWrite(pin_cfg_epaper.panelDC, LOW);
+    digitalWrite(pin_cfg_epaper.panelCS, LOW);
+    hV_HAL_SPI_transfer(command);
+    digitalWrite(pin_cfg_epaper.panelCS, HIGH);
+
+    digitalWrite(pin_cfg_epaper.panelDC, HIGH);
+    digitalWrite(pin_cfg_epaper.panelCS, LOW);
+    hV_HAL_SPI_transfer(data);
+    digitalWrite(pin_cfg_epaper.panelCS, HIGH);
+}
+
 void EPD_Driver::softReset() {
     sendIndexData(0x00, &register_data[1], 1);  // Soft-reset
-    uint32_t timeout = 5000;
-    while (digitalRead(pin_cfg_epaper.panelBusy) != HIGH) {
-        if (--timeout == 0) {
-            std::cerr << "Timeout en softReset" << std::endl;
-            break;
-        }
+    
+    uint32_t timeout = 5000;  // 5 segundos de timeout
+    while (digitalRead(pin_cfg_epaper.panelBusy) != HIGH && timeout > 0) {
         delay_ms(1);
+        timeout--;
+    }
+    
+    if (timeout == 0) {
+        std::cerr << "ERROR: softReset() timeouteó - BUSY nunca llegó a HIGH" << std::endl;
     }
 }
 
@@ -254,45 +241,41 @@ void EPD_Driver::reset(uint32_t ms1, uint32_t ms2, uint32_t ms3, uint32_t ms4, u
 }
 
 void EPD_Driver::DCDC_powerOn() {
-    uint8_t dummy = 0;
-    sendIndexData(0x04, &dummy, 0);  // Power on
-    uint32_t timeout = 10000;
-    while (digitalRead(pin_cfg_epaper.panelBusy) != HIGH) {
-        if (--timeout == 0) {
-            std::cerr << "Timeout en DCDC_powerOn" << std::endl;
-            break;
-        }
+    uint8_t dummy = 0x00;
+    sendIndexData(0x04, &dummy, 0);  // Power on — solo comando, sin dato extra
+    
+    uint32_t timeout = 5000;  // 5 segundos de timeout
+    while (digitalRead(pin_cfg_epaper.panelBusy) != HIGH && timeout > 0) {
         delay_ms(1);
+        timeout--;
+    }
+    
+    if (timeout == 0) {
+        std::cerr << "ERROR: DCDC_powerOn() timeouteó - BUSY nunca llegó a HIGH" << std::endl;
     }
 }
 
 void EPD_Driver::displayRefresh() {
-    uint8_t dummy = 0;
-    sendIndexData(0x12, &dummy, 0);  // Display Refresh
-    uint32_t timeout = 60000;
-    while (digitalRead(pin_cfg_epaper.panelBusy) != HIGH) {
-        if (--timeout == 0) {
-            std::cerr << "Timeout en displayRefresh" << std::endl;
-            break;
-        }
+    uint8_t dummy = 0x00;
+    sendIndexData(0x12, &dummy, 0);  // Display Refresh — solo comando
+    
+    uint32_t timeout = 20000;  // 20 segundos para refresh completo
+    while (digitalRead(pin_cfg_epaper.panelBusy) != HIGH && timeout > 0) {
         delay_ms(1);
+        timeout--;
+    }
+    
+    if (timeout == 0) {
+        std::cerr << "ERROR: displayRefresh() timeouteó - BUSY nunca llegó a HIGH" << std::endl;
     }
 }
 
 void EPD_Driver::globalUpdate(const uint8_t *data1s, const uint8_t *data2s) {
-    (void)data2s;
-    // Soft-reset + re-inicialización (necesarios antes de cada ciclo de update)
-    sendIndexData(0x00, &register_data[1], 1);
-    delay_ms(5);
-    sendIndexData(0xE5, &register_data[2], 1);   // Input Temperature
-    sendIndexData(0xE0, &register_data[3], 1);   // Active Temperature
-    sendIndexData(0x00, &register_data[4], 2);   // PSR
-
-    // Enviar primer frame
+    // Enviar primer frame (0x10 = canal negro/BW)
     sendIndexData(0x10, data1s, image_data_size);
 
-    // Enviar segundo frame (0x00: 0x10 XOR 0x00 = 0x10 → imagen visible)
-    sendIndexData(0x13, m_zeroFrame, image_data_size);
+    // Enviar segundo frame (0x13 = canal rojo/segundo plano)
+    sendIndexData(0x13, data2s, image_data_size);
 
     // Encender DC/DC y refrescar
     DCDC_powerOn();
@@ -301,26 +284,31 @@ void EPD_Driver::globalUpdate(const uint8_t *data1s, const uint8_t *data2s) {
 
 void EPD_Driver::fastUpdate(const uint8_t *oldData, const uint8_t *newData) {
     bool hasChanges = false;
+
     for (uint32_t i = 0; i < image_data_size; i++) {
         if (oldData[i] != newData[i]) {
             hasChanges = true;
             break;
         }
     }
-    if (!hasChanges) return;
+
+    if (!hasChanges) {
+        return;
+    }
 
     softReset();
 
     uint8_t tempFast = register_data[2] | 0x40;
-    sendIndexData(0xE5, &tempFast, 1);
-    sendIndexData(0xE0, &register_data[3], 1);
+    sendCommandData8(0xE5, tempFast);
+
+    sendCommandData8(0xE0, register_data[3]);
 
     uint8_t psrFast[2] = { static_cast<uint8_t>(register_data[4] | 0x10), static_cast<uint8_t>(register_data[5] | 0x02) };
     sendIndexData(0x00, psrFast, 2);
 
-    uint8_t cdi = 0x07;
-    sendIndexData(0x50, &cdi, 1);
+    sendCommandData8(0x50, 0x07);
 
+    // Fast update: 0x10=OLD image, 0x13=NEW image (swapped)
     sendIndexData(0x10, oldData, image_data_size);
     sendIndexData(0x13, newData, image_data_size);
 
@@ -331,13 +319,14 @@ void EPD_Driver::fastUpdate(const uint8_t *oldData, const uint8_t *newData) {
 void EPD_Driver::COG_powerOff() {
     sendIndexData(0x02, &register_data[0], 0);  // Turn off DC/DC
     
-    uint32_t timeout = 5000;
-    while (digitalRead(pin_cfg_epaper.panelBusy) != HIGH) {
-        if (--timeout == 0) {
-            std::cerr << "Timeout en COG_powerOff" << std::endl;
-            break;
-        }
+    uint32_t timeout = 5000;  // 5 segundos de timeout
+    while (digitalRead(pin_cfg_epaper.panelBusy) != HIGH && timeout > 0) {
         delay_ms(1);
+        timeout--;
+    }
+    
+    if (timeout == 0) {
+        std::cerr << "ERROR: COG_powerOff() timeouteó - BUSY nunca llegó a HIGH" << std::endl;
     }
     
     digitalWrite(pin_cfg_epaper.panelDC, LOW);
@@ -376,9 +365,9 @@ void EPD_Driver::printGpios() {
     }
     std::cout << "========================================" << std::endl;
     std::cout << "SPI Configuración:" << std::endl;
-    std::cout << "  - Clock: SCLK (GPIO11) [Marrón]" << std::endl;
-    std::cout << "  - MOSI: GPIO10 [Azul]" << std::endl;
-    std::cout << "  - MISO: GPIO9 (no usado) [Verde]" << std::endl;
+    std::cout << "  - Clock: SCLK (GPIO11)" << std::endl;
+    std::cout << "  - MOSI: GPIO10" << std::endl;
+    std::cout << "  - MISO: GPIO9 (no usado)" << std::endl;
     std::cout << "========================================" << std::endl;
 }
 
