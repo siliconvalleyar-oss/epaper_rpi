@@ -22,7 +22,7 @@
 #include <tyme/tyme.h>
 #include <app/config.h>
 
-#define SCREEN 266
+#define SCREEN 213
 
 // Layout de la pantalla (296 x 152 pixeles):
 //
