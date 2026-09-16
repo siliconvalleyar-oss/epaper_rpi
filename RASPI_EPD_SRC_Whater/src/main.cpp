@@ -126,7 +126,7 @@ int main() {
     }
 
     auto display = std::make_unique<EPAPER_DISPLAY::EpaperDisplay>(
-        eScreen_EPD_266, EPAPER::boardRaspberryPi
+        eScreen_EPD_213, EPAPER::boardRaspberryPi
     );
     if (!display->init()) {
         std::cerr << "ERROR: display init failed" << std::endl;
@@ -175,7 +175,7 @@ int main() {
         display->drawCenteredString(y, "BUENOS AIRES", FONT_7x8_THICK, true);
         y += 12;
 
-        display->drawLine(10, y, 285, y, true);
+        display->drawLine(8, y, 204, y, true);
         y += 4;
 
         if (wd.tempC > -900) {
@@ -187,7 +187,7 @@ int main() {
             int bigW = bigT.size() * 17;
             int labelW = display->getTextWidth("C", FONT_7x8_THICK);
             int totalW = bigW + 4 + labelW;
-            int x0 = (296 - totalW) / 2;
+            int x0 = (212 - totalW) / 2;
             if (x0 < 0) x0 = 0;
 
             for (char c : bigT) {
@@ -222,7 +222,7 @@ int main() {
         }
 
         y += 2;
-        display->drawLine(10, y, 285, y, true);
+        display->drawLine(8, y, 204, y, true);
         y += 4;
 
         char timeBuf[32];
@@ -252,13 +252,13 @@ int main() {
 
         if (newData) scrollPx = 0;
         int offset = scrollPx % cycle;
-        int x1 = 296 - offset;
+        int x1 = 212 - offset;
 
-        if (x1 + textW > 0 && x1 < 296)
+        if (x1 + textW > 0 && x1 < 212)
             display->drawString(x1, y, marqueeText, FONT_3x8_TINY, true);
 
         int x2 = x1 + textW + gap;
-        if (x2 + textW > 0 && x2 < 296)
+        if (x2 + textW > 0 && x2 < 212)
             display->drawString(x2, y, marqueeText, FONT_3x8_TINY, true);
 
         if (display->update()) {
