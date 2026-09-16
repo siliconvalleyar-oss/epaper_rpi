@@ -2,7 +2,7 @@
 #include <memory>
 #include <epaper/epaper.h>
 #include <epaper/boards.h>
-#define SCREEN 266
+#define SCREEN 213
 #include <graphics/userImageData.h>
 #include <tyme/tyme.h>
 #include <app/config.h>
@@ -50,7 +50,7 @@ int main() {
     // ============================================================
     // E-Paper Display Mode
     // ============================================================
-    auto epaper {std::make_unique<EPAPER::EPD_Driver>(eScreen_EPD_266, EPAPER::boardRaspberryPiZero2W)};
+    auto epaper {std::make_unique<EPAPER::EPD_Driver>(eScreen_EPD_213, EPAPER::boardRaspberryPiZero2W)};
 
     epaper->COG_initial();
     epaper->printGpios();
