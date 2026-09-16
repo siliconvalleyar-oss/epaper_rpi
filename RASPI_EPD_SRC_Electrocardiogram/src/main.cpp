@@ -23,13 +23,13 @@
 #include <app/config.h>
 #include <ecg/ecg_signal.h>
 
-#define SCREEN 266
+#define SCREEN 213
 
-#define SCREEN_WIDTH  296
-#define SCREEN_HEIGHT 152
+#define SCREEN_WIDTH  212
+#define SCREEN_HEIGHT 104
 
-#define ECG_AREA_Y     20
-#define ECG_AREA_H     90
+#define ECG_AREA_Y     10
+#define ECG_AREA_H     60
 #define ECG_BASELINE_Y (ECG_AREA_Y + ECG_AREA_H / 2)
 
 static volatile sig_atomic_t running = 1;
@@ -78,7 +78,7 @@ int main() {
     signal(SIGTERM, signalHandler);
 
     std::cout << "=== E-PAPER ECG DEMO ===" << std::endl;
-    std::cout << "Pantalla: 2.66\" (296x152)" << std::endl;
+    std::cout << "Pantalla: 2.13\" (212x104)" << std::endl;
     std::cout << "Señal: ECG simulada 72 BPM" << std::endl;
     std::cout << "Presiona Ctrl+C para salir\n" << std::endl;
 
@@ -87,7 +87,7 @@ int main() {
         return 1;
     }
 
-    EPAPER::EPD_Driver epaper(eScreen_EPD_266, EPAPER::boardRaspberryPiZero2W);
+    EPAPER::EPD_Driver epaper(eScreen_EPD_213, EPAPER::boardRaspberryPiZero2W);
 
     std::cout << "Inicializando COG..." << std::endl;
     epaper.COG_initial();
